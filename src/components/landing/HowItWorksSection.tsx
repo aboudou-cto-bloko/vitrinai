@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Link, Lightning, ChartBar, ArrowRight } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 
@@ -40,7 +40,7 @@ export function HowItWorksSection() {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const progressRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const startCycle = () => {
+  const startCycle = useCallback(() => {
     if (intervalRef.current) clearInterval(intervalRef.current);
     if (progressRef.current) clearInterval(progressRef.current);
 
@@ -54,18 +54,21 @@ export function HowItWorksSection() {
       setActive((a) => (a + 1) % steps.length);
       setProgress(0);
     }, INTERVAL);
-  };
+  }, []);
 
   useEffect(() => {
-    if (!paused) startCycle();
+    if (paused) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    startCycle();
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
       if (progressRef.current) clearInterval(progressRef.current);
     };
-  }, [paused]);
+  }, [paused, startCycle]);
 
   const handleStepClick = (i: number) => {
     setActive(i);
+    setProgress(0);
     setPaused(false);
     startCycle();
   };
@@ -154,15 +157,7 @@ export function HowItWorksSection() {
             onMouseLeave={() => setPaused(false)}
           >
             {steps.map((step, i) => {
-              const offset = i - active;
               const isActive = i === active;
-              const isPrev = i < active || (active === 0 && i === steps.length - 1);
-
-              // Calcul position dans la pile
-              const behind =
-                active === 0 && i === steps.length - 1
-                  ? false
-                  : i < active;
 
               const visualOffset = (() => {
                 if (isActive) return 0;

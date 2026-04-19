@@ -2,7 +2,6 @@
 
 import { useQuery } from "convex/react";
 import { api } from "@/../convex/_generated/api";
-import { Users } from "@phosphor-icons/react";
 
 const COLUMNS = [
   { key: "nouveau", label: "Nouveau", color: "#87867f" },

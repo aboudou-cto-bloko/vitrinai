@@ -15,12 +15,6 @@ export interface PageSpeedResult {
 export async function runPageSpeed(url: string): Promise<PageSpeedResult> {
   const apiKey = process.env.GOOGLE_PAGESPEED_API_KEY;
   const categories = ["performance", "seo", "accessibility", "best-practices"];
-  const params = new URLSearchParams({
-    url,
-    strategy: "mobile",
-    ...(apiKey ? { key: apiKey } : {}),
-    ...Object.fromEntries(categories.map((c) => [`category`, c])),
-  });
 
   // Build URL manually for multiple category params
   const base = "https://www.googleapis.com/pagespeedonline/v5/runPagespeed";
@@ -35,7 +29,7 @@ export async function runPageSpeed(url: string): Promise<PageSpeedResult> {
     clearTimeout(timeout);
 
     if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
+      await res.json().catch(() => ({}));
       return fallback(`PageSpeed API error: ${res.status}`);
     }
 
@@ -61,8 +55,8 @@ export async function runPageSpeed(url: string): Promise<PageSpeedResult> {
         audits["uses-responsive-images"]?.score !== 0 ||
         (audits["viewport"]?.score ?? 0) >= 0.9,
     };
-  } catch (err) {
-    return fallback(err instanceof Error ? err.message : "Timeout");
+  } catch (e) {
+    return fallback(e instanceof Error ? e.message : "Timeout");
   }
 }
 

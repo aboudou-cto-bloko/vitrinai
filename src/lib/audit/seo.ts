@@ -60,7 +60,7 @@ export async function analyzeSeo(url: string): Promise<SeoResult> {
       if (href.startsWith("http")) {
         try {
           const host = new URL(href).host;
-          host === baseHost ? internalLinks++ : externalLinks++;
+          if (host === baseHost) { internalLinks++; } else { externalLinks++; }
         } catch { externalLinks++; }
       } else if (href.startsWith("/") || href.startsWith("#")) {
         internalLinks++;
