@@ -33,7 +33,11 @@ export async function analyzeSeo(url: string): Promise<SeoResult> {
     const timeout = setTimeout(() => controller.abort(), 15000);
     const res = await fetch(url, {
       signal: controller.signal,
-      headers: { "User-Agent": "VitrinAI-Audit/1.0" },
+      headers: {
+        "User-Agent": "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "fr,en;q=0.5",
+      },
     });
     clearTimeout(timeout);
 

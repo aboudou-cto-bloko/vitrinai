@@ -9,6 +9,8 @@ export interface PageSpeedResult {
   tbt: number | null;   // Total Blocking Time (ms)
   speedIndex: number | null;
   isMobileFriendly: boolean;
+  /** true quand la réponse API est une estimation (quota dépassé, timeout…) */
+  isEstimate?: boolean;
   error?: string;
 }
 
@@ -16,11 +18,9 @@ export async function runPageSpeed(url: string): Promise<PageSpeedResult> {
   const apiKey = process.env.GOOGLE_PAGESPEED_API_KEY;
   const categories = ["performance", "seo", "accessibility", "best-practices"];
 
-  // Build URL manually for multiple category params
-  const base = "https://www.googleapis.com/pagespeedonline/v5/runPagespeed";
-  const catParams = categories.map((c) => `category=${c}`).join("&");
+  const catParams = categories.map((c) => `category=${encodeURIComponent(c)}`).join("&");
   const urlParam = `url=${encodeURIComponent(url)}&strategy=mobile${apiKey ? `&key=${apiKey}` : ""}`;
-  const endpoint = `${base}?${urlParam}&${catParams}`;
+  const endpoint = `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?${urlParam}&${catParams}`;
 
   try {
     const controller = new AbortController();
@@ -30,7 +30,8 @@ export async function runPageSpeed(url: string): Promise<PageSpeedResult> {
 
     if (!res.ok) {
       await res.json().catch(() => ({}));
-      return fallback(`PageSpeed API error: ${res.status}`);
+      // API quota or error — retour partiel marqué estimate
+      return fallback(`PageSpeed API error: ${res.status}`, true);
     }
 
     const data = await res.json();
@@ -38,40 +39,41 @@ export async function runPageSpeed(url: string): Promise<PageSpeedResult> {
     const audits = data.lighthouseResult?.audits ?? {};
 
     const score = (key: string) => Math.round((cats[key]?.score ?? 0) * 100);
-    const numVal = (key: string) =>
-      audits[key]?.numericValue ?? null;
+    const numVal = (key: string): number | null => audits[key]?.numericValue ?? null;
+
+    // Mobile-friendly = viewport présent ET pas d'erreur de viewport
+    const viewportScore = audits["viewport"]?.score ?? 0;
+    const mobileUsability = (audits["mobile-friendly"]?.score ?? 1) >= 0.9;
+    const isMobileFriendly = viewportScore >= 0.9 || mobileUsability;
 
     return {
-      performance: score("performance"),
-      seo: score("seo"),
-      accessibility: score("accessibility"),
-      bestPractices: score("best-practices"),
-      fcp: numVal("first-contentful-paint"),
-      lcp: numVal("largest-contentful-paint"),
-      cls: audits["cumulative-layout-shift"]?.numericValue ?? null,
-      tbt: numVal("total-blocking-time"),
-      speedIndex: numVal("speed-index"),
-      isMobileFriendly:
-        audits["uses-responsive-images"]?.score !== 0 ||
-        (audits["viewport"]?.score ?? 0) >= 0.9,
+      performance:    score("performance"),
+      seo:            score("seo"),
+      accessibility:  score("accessibility"),
+      bestPractices:  score("best-practices"),
+      fcp:            numVal("first-contentful-paint"),
+      lcp:            numVal("largest-contentful-paint"),
+      cls:            audits["cumulative-layout-shift"]?.numericValue ?? null,
+      tbt:            numVal("total-blocking-time"),
+      speedIndex:     numVal("speed-index"),
+      isMobileFriendly,
     };
   } catch (e) {
-    return fallback(e instanceof Error ? e.message : "Timeout");
+    return fallback(e instanceof Error ? e.message : "Timeout", true);
   }
 }
 
-function fallback(error: string): PageSpeedResult {
+function fallback(error: string, isEstimate = false): PageSpeedResult {
   return {
-    performance: 0,
-    seo: 0,
-    accessibility: 0,
-    bestPractices: 0,
-    fcp: null,
-    lcp: null,
-    cls: null,
-    tbt: null,
-    speedIndex: null,
-    isMobileFriendly: false,
+    // On retourne 50 comme estimation neutre — on ne pénalise pas un site
+    // dont on ne peut pas mesurer les perfs (quota API, réseau…)
+    performance:   50,
+    seo:           50,
+    accessibility: 50,
+    bestPractices: 50,
+    fcp: null, lcp: null, cls: null, tbt: null, speedIndex: null,
+    isMobileFriendly: true,
+    isEstimate,
     error,
   };
 }

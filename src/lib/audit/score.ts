@@ -46,20 +46,26 @@ export function computeScores(
     techChecks.push(warn("redirect", "Pas de redirection HTTPS", "Manquant", "Les visiteurs HTTP ne sont pas redirigés.", "medium"));
   }
 
-  // Performance Lighthouse (8 pts)
+  // Performance Lighthouse (8 pts) — skip si estimation (quota API)
   const perfScore = ps.performance;
-  const perfPts = perfScore >= 90 ? 8 : perfScore >= 70 ? 6 : perfScore >= 50 ? 4 : perfScore >= 30 ? 2 : 1;
-  tech += perfPts;
-  if (perfScore >= 70) {
-    techChecks.push(pass("perf", "Performance Lighthouse", `${perfScore}/100`, "high"));
-  } else if (perfScore >= 40) {
-    techChecks.push(warn("perf", "Performance à améliorer", `${perfScore}/100`, "Un score < 70 ralentit votre référencement.", "high"));
+  if (!ps.isEstimate) {
+    const perfPts = perfScore >= 90 ? 8 : perfScore >= 70 ? 6 : perfScore >= 50 ? 4 : perfScore >= 30 ? 2 : 1;
+    tech += perfPts;
+    if (perfScore >= 70) {
+      techChecks.push(pass("perf", "Performance Lighthouse", `${perfScore}/100`, "high"));
+    } else if (perfScore >= 40) {
+      techChecks.push(warn("perf", "Performance à améliorer", `${perfScore}/100`, "Un score < 70 ralentit votre référencement.", "high"));
+    } else {
+      techChecks.push(fail("perf", "Site trop lent", `${perfScore}/100`, "Google déprioritise les sites lents.", "high"));
+    }
   } else {
-    techChecks.push(fail("perf", "Site trop lent", `${perfScore}/100`, "Google déprioritise les sites lents.", "high"));
+    // Données indisponibles : crédit neutre (4/8)
+    tech += 4;
+    techChecks.push(warn("perf", "Performance non mesurée", "—", "Quota API temporairement dépassé. Score estimé.", "high"));
   }
 
-  // LCP (3 pts)
-  const lcp = ps.lcp ? Math.round(ps.lcp / 1000 * 10) / 10 : null;
+  // LCP (3 pts) — seulement si données réelles
+  const lcp = (!ps.isEstimate && ps.lcp) ? Math.round(ps.lcp / 1000 * 10) / 10 : null;
   if (lcp !== null) {
     if (lcp <= 2.5) {
       tech += 3; techChecks.push(pass("lcp", "Affichage principal rapide (LCP)", `${lcp}s`, "medium"));
@@ -68,11 +74,16 @@ export function computeScores(
     } else {
       techChecks.push(fail("lcp", "Affichage principal très lent (LCP)", `${lcp}s`, "Objectif : moins de 2.5s. Impact fort sur l'expérience.", "medium"));
     }
+  } else if (ps.isEstimate) {
+    tech += 1; // crédit minimal
   }
 
   // Mobile (4 pts)
   if (ps.isMobileFriendly) {
     tech += 4; techChecks.push(pass("mobile", "Compatible mobile", "Oui", "high"));
+  } else if (ps.isEstimate) {
+    tech += 2; // incertain
+    techChecks.push(warn("mobile", "Compatibilité mobile non vérifiée", "—", "Données insuffisantes pour confirmer.", "high"));
   } else {
     techChecks.push(fail("mobile", "Non adapté au mobile", "Non", "60%+ du trafic vient du mobile.", "high"));
   }
@@ -86,8 +97,12 @@ export function computeScores(
 
   // Best practices (2 pts)
   const bp = ps.bestPractices;
-  if (bp >= 80) { tech += 2; techChecks.push(pass("bp", "Bonnes pratiques web", `${bp}/100`, "low")); }
-  else { techChecks.push(warn("bp", "Bonnes pratiques insuffisantes", `${bp}/100`, "HTTPS, console errors, libraries à jour.", "low")); }
+  if (!ps.isEstimate) {
+    if (bp >= 80) { tech += 2; techChecks.push(pass("bp", "Bonnes pratiques web", `${bp}/100`, "low")); }
+    else { techChecks.push(warn("bp", "Bonnes pratiques insuffisantes", `${bp}/100`, "HTTPS, console errors, libraries à jour.", "low")); }
+  } else {
+    tech += 1;
+  }
 
   // ── SEO (max 30) ─────────────────────────────────────────────────────────
   const seoChecks: Check[] = [];

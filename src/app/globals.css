@@ -127,3 +127,26 @@ h1, h2, h3, h4, h5, h6 {
   font-family: Georgia, "Times New Roman", serif;
   font-weight: 500;
 }
+
+/* ─── Print / PDF ────────────────────────────────────────────────────── */
+@media print {
+  /* Masquer tout sauf le contenu du rapport */
+  body > *:not(main) { display: none !important; }
+  header, nav, footer, #export-pdf-btn, [id="export-pdf-btn"] { display: none !important; }
+
+  /* Reset background pour l'impression */
+  body, main { background: #fff !important; }
+  .bg-noir { background: #1a1a18 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .bg-parchemin { background: #f5f4ed !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .bg-white { background: #fff !important; }
+
+  /* Éviter les coupures de page dans les cards */
+  .rounded-2xl, .rounded-xl { break-inside: avoid; }
+
+  /* Forcer les couleurs à s'imprimer */
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+  /* Ajustement mise en page */
+  #rapport-content { max-width: 100% !important; padding: 0 !important; }
+  .max-w-4xl { max-width: 100% !important; }
+}
