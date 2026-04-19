@@ -1,8 +1,13 @@
 import { notFound } from "next/navigation";
+import { ConvexHttpClient } from "convex/browser";
+import { api } from "@/../convex/_generated/api";
+import type { Id } from "@/../convex/_generated/dataModel";
 import { RapportPoller } from "./RapportPoller";
 import { RapportContent } from "./RapportContent";
 import type { Metadata } from "next";
 import type { AuditDetails, AuditScores, Recommandation } from "@/lib/audit/types";
+
+const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
 interface AuditData {
   url: string;
@@ -18,14 +23,28 @@ type FetchResult =
   | { state: "error" };
 
 async function fetchAudit(id: string): Promise<FetchResult> {
-  const base = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
   try {
-    const res = await fetch(`${base}/api/audit/status/${id}`, { cache: "no-store" });
-    if (!res.ok) return { state: "error" };
-    const data = await res.json();
-    if (data.statut === "en_cours") return { state: "pending" };
-    if (data.statut !== "terminé") return { state: "error" };
-    return { state: "done", data: data as AuditData };
+    const audit = await convex.query(api.audits.getById, {
+      id: id as Id<"audits">,
+    });
+    if (!audit) return { state: "error" };
+    if (audit.statut === "en_cours") return { state: "pending" };
+    if (audit.statut !== "terminé" || !audit.scores) return { state: "error" };
+
+    const recommandations: Recommandation[] = (audit.recommandations ?? [])
+      .map((r: string) => { try { return JSON.parse(r); } catch { return null; } })
+      .filter(Boolean);
+
+    return {
+      state: "done",
+      data: {
+        url: audit.url,
+        scores: audit.scores as AuditScores,
+        details: audit.details as AuditDetails,
+        recommandations,
+        createdAt: audit.createdAt,
+      },
+    };
   } catch {
     return { state: "error" };
   }
