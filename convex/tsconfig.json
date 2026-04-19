@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "lib": ["ESNext", "DOM"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "skipLibCheck": true,
+    "allowSyntheticDefaultImports": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "paths": {
+      "convex/_generated/server": ["./node_modules/convex/dist/esm-types/server/index.d.ts"]
+    }
+  },
+  "include": ["./**/*.ts"]
+}

@@ -1,26 +1,129 @@
 @import "tailwindcss";
 
+/* ─── VitrinAI Design Tokens ─────────────────────────────────────────── */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Brand */
+  --color-savane:        #2d7a4f;
+  --color-savane-hover:  #3d9962;
+
+  /* Surfaces — clair */
+  --color-parchemin:     #f5f4ed;
+  --color-ivoire:        #faf9f5;
+  --color-blanc:         #ffffff;
+  --color-sable:         #e8e6dc;
+
+  /* Surfaces — sombre */
+  --color-noir:          #141413;
+  --color-noir-eleve:    #30302e;
+
+  /* Texte */
+  --color-charbon:       #4d4c48;
+  --color-olive:         #5e5d59;
+  --color-pierre:        #87867f;
+  --color-argent:        #b0aea5;
+
+  /* Bordures */
+  --color-bordure:       #f0eee6;
+  --color-bordure-forte: #e8e6dc;
+  --color-bordure-sombre:#30302e;
+
+  /* Sémantique */
+  --color-success:       #22c55e;
+  --color-warning:       #f59e0b;
+  --color-error:         #b53333;
+  --color-focus:         #3898ec;
+
+  /* Shadcn aliases → tokens VitrinAI */
+  --color-background:         var(--color-parchemin);
+  --color-foreground:         var(--color-noir);
+  --color-card:               var(--color-ivoire);
+  --color-card-foreground:    var(--color-noir);
+  --color-popover:            var(--color-blanc);
+  --color-popover-foreground: var(--color-noir);
+  --color-primary:            var(--color-savane);
+  --color-primary-foreground: var(--color-ivoire);
+  --color-secondary:          var(--color-sable);
+  --color-secondary-foreground: var(--color-charbon);
+  --color-muted:              var(--color-bordure);
+  --color-muted-foreground:   var(--color-pierre);
+  --color-accent:             var(--color-sable);
+  --color-accent-foreground:  var(--color-charbon);
+  --color-destructive:        var(--color-error);
+  --color-destructive-foreground: var(--color-ivoire);
+  --color-border:             var(--color-bordure);
+  --color-input:              var(--color-bordure-forte);
+  --color-ring:               var(--color-focus);
 }
 
+/* ─── Tailwind v4 theme ───────────────────────────────────────────────── */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  /* expose toutes les variables comme utilitaires Tailwind */
+  --color-savane:            #2d7a4f;
+  --color-savane-hover:      #3d9962;
+  --color-parchemin:         #f5f4ed;
+  --color-ivoire:            #faf9f5;
+  --color-sable:             #e8e6dc;
+  --color-noir:              #141413;
+  --color-noir-eleve:        #30302e;
+  --color-charbon:           #4d4c48;
+  --color-olive:             #5e5d59;
+  --color-pierre:            #87867f;
+  --color-argent:            #b0aea5;
+  --color-bordure:           #f0eee6;
+  --color-bordure-forte:     #e8e6dc;
+  --color-success:           #22c55e;
+  --color-warning:           #f59e0b;
+  --color-error:             #b53333;
+  --color-focus:             #3898ec;
+
+  /* shadcn tokens */
+  --color-background:        #f5f4ed;
+  --color-foreground:        #141413;
+  --color-card:              #faf9f5;
+  --color-card-foreground:   #141413;
+  --color-popover:           #ffffff;
+  --color-popover-foreground:#141413;
+  --color-primary:           #2d7a4f;
+  --color-primary-foreground:#faf9f5;
+  --color-secondary:         #e8e6dc;
+  --color-secondary-foreground: #4d4c48;
+  --color-muted:             #f0eee6;
+  --color-muted-foreground:  #87867f;
+  --color-accent:            #e8e6dc;
+  --color-accent-foreground: #4d4c48;
+  --color-destructive:       #b53333;
+  --color-destructive-foreground: #faf9f5;
+  --color-border:            #f0eee6;
+  --color-input:             #e8e6dc;
+  --color-ring:              #3898ec;
+
+  /* Typographie */
+  --font-sans:   Inter, system-ui, sans-serif;
+  --font-serif:  Georgia, "Times New Roman", serif;
+
+  /* Radius */
+  --radius-sm:   6px;
+  --radius:      8px;
+  --radius-md:   12px;
+  --radius-lg:   16px;
+  --radius-xl:   24px;
+  --radius-2xl:  32px;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ─── Base ───────────────────────────────────────────────────────────── */
+* {
+  border-color: var(--color-bordure);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--color-parchemin);
+  color: var(--color-noir);
+  font-family: Inter, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Toutes les balises heading utilisent Georgia */
+h1, h2, h3, h4, h5, h6 {
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: 500;
 }
