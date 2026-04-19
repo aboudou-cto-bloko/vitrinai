@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Providers } from "./providers";
+import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
   metadataBase: new URL(
@@ -34,6 +35,18 @@ export default function RootLayout({
     <html lang="fr" className="h-full antialiased">
       <body className="min-h-full flex flex-col">
         <Providers>{children}</Providers>
+        <Toaster
+          position="bottom-right"
+          toastOptions={{
+            style: {
+              background: "#1c1c1b",
+              color: "#f0ede4",
+              border: "1px solid #2e2e2c",
+              fontFamily: "Inter, system-ui, sans-serif",
+              fontSize: "14px",
+            },
+          }}
+        />
       </body>
     </html>
   );

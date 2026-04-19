@@ -1,6 +1,7 @@
 "use client";
 
 import { motion, useMotionValue, useTransform, animate } from "motion/react";
+import { toast } from "sonner";
 import { useEffect, useRef } from "react";
 import Link from "next/link";
 import {
@@ -251,7 +252,9 @@ function ShareButton() {
       navigator.share({ title: "Mon rapport VitrinAI", url: window.location.href }).catch(() => {});
     } else {
       navigator.clipboard.writeText(window.location.href).then(() => {
-        alert("Lien copié !");
+        toast.success("Lien copié dans le presse-papier !");
+      }).catch(() => {
+        toast.error("Impossible de copier le lien.");
       });
     }
   }

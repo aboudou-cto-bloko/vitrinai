@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -32,12 +33,10 @@ export function AuditWidget() {
   const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(0);
-  const [error, setError] = useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!url.trim() || loading) return;
-    setError(null);
     setLoading(true);
     setStep(0);
 
@@ -50,13 +49,13 @@ export function AuditWidget() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error ?? "Erreur lors du lancement de l'audit.");
+        toast.error(data.error ?? "Erreur lors du lancement de l'audit.", { duration: 5000 });
         setLoading(false);
         return;
       }
       auditId = data.auditId;
     } catch {
-      setError("Impossible de contacter le serveur.");
+      toast.error("Impossible de contacter le serveur. Vérifiez votre connexion.", { duration: 5000 });
       setLoading(false);
       return;
     }
@@ -77,13 +76,13 @@ export function AuditWidget() {
         }
         if (data.statut === "erreur" || polls >= MAX_POLLS) {
           clearInterval(interval);
-          setError("L'audit a échoué. Vérifiez l'URL et réessayez.");
+          toast.error("L'audit a échoué. Vérifiez l'URL et réessayez.", { duration: 6000 });
           setLoading(false);
         }
       } catch {
         if (polls >= MAX_POLLS) {
           clearInterval(interval);
-          setError("Délai d'attente dépassé. Réessayez.");
+          toast.error("Délai d'attente dépassé. Réessayez dans quelques instants.", { duration: 6000 });
           setLoading(false);
         }
       }
@@ -104,7 +103,6 @@ export function AuditWidget() {
             transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
             className="p-8 flex flex-col gap-6"
           >
-            {/* Step icon */}
             <div className="flex items-center justify-center">
               <div className="relative w-16 h-16">
                 <motion.div className="absolute inset-0">
@@ -125,7 +123,6 @@ export function AuditWidget() {
               </div>
             </div>
 
-            {/* Step label */}
             <AnimatePresence mode="wait">
               <motion.div
                 key={step}
@@ -140,7 +137,6 @@ export function AuditWidget() {
               </motion.div>
             </AnimatePresence>
 
-            {/* Progress bar */}
             <div className="flex flex-col gap-2">
               <div className="w-full bg-sable rounded-full h-1.5 overflow-hidden">
                 <motion.div
@@ -149,7 +145,6 @@ export function AuditWidget() {
                   transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
                 />
               </div>
-              {/* Step dots */}
               <div className="flex justify-center gap-1.5 mt-1">
                 {STEPS.map((_, i) => (
                   <motion.div
@@ -192,20 +187,6 @@ export function AuditWidget() {
                 autoComplete="off"
               />
             </div>
-
-            <AnimatePresence>
-              {error && (
-                <motion.p
-                  className="text-[13px] text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-2"
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  {error}
-                </motion.p>
-              )}
-            </AnimatePresence>
 
             <Button type="submit" size="xl" className="w-full text-[16px] font-medium flex items-center justify-center gap-2 group">
               Analyser maintenant
