@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "@/../convex/_generated/api";
 import { runAudit } from "@/lib/audit";
@@ -68,9 +68,12 @@ export async function POST(req: NextRequest) {
   // Create pending record
   const auditId = await convex.mutation(api.audits.create, { url });
 
-  // Run audit in background — respond immediately with auditId
-  runAudit(url)
-    .then(async (result) => {
+  const response = NextResponse.json({ auditId });
+
+  // after() garde la fonction serverless vivante après l'envoi de la réponse
+  after(async () => {
+    try {
+      const result = await runAudit(url);
       await convex.mutation(api.audits.updateResult, {
         id: auditId,
         statut: "terminé",
@@ -78,14 +81,14 @@ export async function POST(req: NextRequest) {
         details: result.details,
         recommandations: result.recommandations.map((r) => JSON.stringify(r)),
       });
-    })
-    .catch(async (err) => {
+    } catch (err) {
       await convex.mutation(api.audits.updateResult, {
         id: auditId,
         statut: "erreur",
       });
       console.error("[audit] error for", url, err);
-    });
+    }
+  });
 
-  return NextResponse.json({ auditId });
+  return response;
 }
