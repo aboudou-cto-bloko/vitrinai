@@ -42,9 +42,6 @@ export function Navbar() {
 
         {/* CTA */}
         <div className="flex items-center gap-3">
-          <Button variant="secondary" size="sm" asChild>
-            <Link href="/login">Se connecter</Link>
-          </Button>
           <Button size="sm" asChild>
             <Link href="#analyser">Analyser mon site</Link>
           </Button>
