@@ -40,9 +40,6 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# convex generated (re-created by `convex dev`)
-convex/_generated/
-
 # claude / agents
 .claude/
 .agents/
