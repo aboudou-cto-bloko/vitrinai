@@ -104,6 +104,40 @@ export function computeScores(
     tech += 1;
   }
 
+  // TTFB (2 pts)
+  if (ps.ttfb !== null && !ps.isEstimate) {
+    if (ps.ttfb <= 200) {
+      tech += 2; techChecks.push(pass("ttfb", "Temps de réponse serveur (TTFB)", `${ps.ttfb} ms`, "medium"));
+    } else if (ps.ttfb <= 600) {
+      tech += 1; techChecks.push(warn("ttfb", "Réponse serveur perfectible (TTFB)", `${ps.ttfb} ms`, "Objectif : < 200 ms. Impacte le temps avant premier affichage.", "medium"));
+    } else {
+      techChecks.push(fail("ttfb", "Serveur trop lent (TTFB)", `${ps.ttfb} ms`, "Au-delà de 600 ms, chaque requête dégrade l'expérience sur réseau lent.", "medium"));
+    }
+  }
+
+  // Poids de la page (3 pts)
+  if (ps.totalByteWeightKb !== null && !ps.isEstimate) {
+    const kb = ps.totalByteWeightKb;
+    if (kb <= 500) {
+      tech += 3; techChecks.push(pass("pageweight", "Poids de page léger", `${kb} Ko`, "medium"));
+    } else if (kb <= 1500) {
+      tech += 1; techChecks.push(warn("pageweight", "Page lourde", `${kb} Ko`, "Objectif : < 500 Ko. Chaque Mo coûte ~150 XOF à l'utilisateur.", "medium"));
+    } else {
+      techChecks.push(fail("pageweight", "Page très lourde", `${(kb / 1024).toFixed(1)} Mo`, "Au-delà de 1,5 Mo, les utilisateurs sur forfait mobile quittent la page.", "medium"));
+    }
+  }
+
+  // Requêtes HTTP (1 pt)
+  if (ps.requestCount !== null && !ps.isEstimate) {
+    if (ps.requestCount <= 50) {
+      tech += 1; techChecks.push(pass("requests", "Nombre de requêtes raisonnable", `${ps.requestCount} requêtes`, "low"));
+    } else if (ps.requestCount <= 80) {
+      techChecks.push(warn("requests", "Beaucoup de requêtes HTTP", `${ps.requestCount} requêtes`, "Objectif : < 50. Chaque requête ajoute de la latence sur réseau mobile.", "low"));
+    } else {
+      techChecks.push(fail("requests", "Trop de requêtes HTTP", `${ps.requestCount} requêtes`, "Regroupez CSS/JS, réduisez les dépendances tierces.", "low"));
+    }
+  }
+
   // ── SEO (max 30) ─────────────────────────────────────────────────────────
   const seoChecks: Check[] = [];
   let seoScore = 0;
@@ -242,6 +276,17 @@ export function computeScores(
     ux += 4; uxChecks.push(pass("contact", "Formulaire / email de contact", "Présent", "high"));
   } else {
     uxChecks.push(fail("contact", "Aucun moyen de contact", "Absent", "Vos visiteurs ne peuvent pas vous écrire.", "high"));
+  }
+
+  // CLS — stabilité visuelle (2 pts)
+  if (ps.cls !== null && !ps.isEstimate) {
+    if (ps.cls <= 0.1) {
+      ux += 2; uxChecks.push(pass("cls", "Stabilité visuelle (CLS)", ps.cls.toFixed(3), "medium"));
+    } else if (ps.cls <= 0.25) {
+      ux += 1; uxChecks.push(warn("cls", "Mise en page instable (CLS)", ps.cls.toFixed(3), "Des éléments bougent au chargement. Objectif : < 0.1.", "medium"));
+    } else {
+      uxChecks.push(fail("cls", "Mise en page très instable (CLS)", ps.cls.toFixed(3), "Les blocs se déplacent pendant le chargement — très perturbant sur mobile.", "medium"));
+    }
   }
 
   // ── SCORES GLOBAUX ───────────────────────────────────────────────────────

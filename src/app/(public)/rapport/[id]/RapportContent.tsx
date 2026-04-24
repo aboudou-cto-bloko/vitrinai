@@ -16,6 +16,8 @@ import {
   ShareNetwork,
 } from "@phosphor-icons/react";
 import { ExportPdfButton } from "./ExportPdfButton";
+import { WebVitalsSection } from "@/components/rapport/WebVitalsSection";
+import { AofSection } from "@/components/rapport/AofSection";
 import type { AuditDetails, AuditScores, Recommandation, Check } from "@/lib/audit/types";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -284,7 +286,13 @@ export function RapportContent({ url, scores, details, recommandations, hostname
             <ShareButton />
             <span className="text-argent/40">|</span>
             <span className="text-[13px] text-argent hidden sm:block">{hostname}</span>
-            <ExportPdfButton hostname={hostname} />
+            <ExportPdfButton
+              hostname={hostname}
+              url={url}
+              scores={scores}
+              details={details}
+              recommandations={recommandations}
+            />
           </div>
         </div>
       </div>
@@ -324,6 +332,12 @@ export function RapportContent({ url, scores, details, recommandations, hostname
             </div>
           </div>
         </motion.section>
+
+        {/* Web Vitals */}
+        {details.vitals && <WebVitalsSection vitals={details.vitals} />}
+
+        {/* AOF Context */}
+        {details.aof && <AofSection aof={details.aof} />}
 
         {/* Recommandations */}
         {recommandations.length > 0 && (

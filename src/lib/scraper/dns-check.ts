@@ -5,7 +5,26 @@ export interface SiteCheckResult {
   statusCode: number | null;
   loadTimeMs: number | null;
   finalUrl: string;
+  cdnProvider: string | null;
   error?: string;
+}
+
+function detectCdn(headers: Headers): string | null {
+  if (headers.get("cf-ray")) return "Cloudflare";
+  if (headers.get("x-amz-cf-id")) return "Amazon CloudFront";
+  const via = (headers.get("via") ?? "").toLowerCase();
+  if (via.includes("fastly")) return "Fastly";
+  if (via.includes("cloudfront")) return "Amazon CloudFront";
+  if (via.includes("varnish")) return "Varnish";
+  const server = (headers.get("server") ?? "").toLowerCase();
+  if (server.includes("cloudflare")) return "Cloudflare";
+  if (server.includes("bunnycdn")) return "Bunny CDN";
+  const xCache = (headers.get("x-cache") ?? "").toLowerCase();
+  if (xCache.includes("cloudfront")) return "Amazon CloudFront";
+  if (xCache.includes("hit") || xCache.includes("miss")) return "CDN";
+  if (headers.get("x-served-by")) return "Fastly";
+  if (headers.get("x-bunny-served")) return "Bunny CDN";
+  return null;
 }
 
 export async function checkSiteExists(url: string): Promise<SiteCheckResult> {
@@ -26,8 +45,8 @@ export async function checkSiteExists(url: string): Promise<SiteCheckResult> {
 
     clearTimeout(timeout);
     const loadTimeMs = Date.now() - start;
+    const cdnProvider = detectCdn(res.headers);
 
-    // Check if http redirects to https
     let redirectsToHttps = hasSSL;
     if (!hasSSL) {
       try {
@@ -54,6 +73,7 @@ export async function checkSiteExists(url: string): Promise<SiteCheckResult> {
       statusCode: res.status,
       loadTimeMs,
       finalUrl: res.url || finalUrl,
+      cdnProvider,
     };
   } catch (err) {
     return {
@@ -63,6 +83,7 @@ export async function checkSiteExists(url: string): Promise<SiteCheckResult> {
       statusCode: null,
       loadTimeMs: null,
       finalUrl,
+      cdnProvider: null,
       error: err instanceof Error ? err.message : "Connexion impossible",
     };
   }
