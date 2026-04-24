@@ -62,7 +62,7 @@ function DirectiveCard({ directive, index }: { directive: AofDirective; index: n
 // ── AOF Radar chart ───────────────────────────────────────────────────────────
 function AofRadar({ aof }: { aof: AofResult }) {
   const load3GScore = aof.estimatedLoad3G_ms !== null
-    ? Math.max(0, 100 - Math.round((aof.estimatedLoad3G_ms / 15000) * 100))
+    ? Math.max(0, 100 - Math.round((aof.estimatedLoad3G_ms / 8000) * 100))
     : 50;
   const weightScore = aof.totalByteWeightKb !== null
     ? Math.max(0, 100 - Math.round((aof.totalByteWeightKb / 3000) * 100))
@@ -224,7 +224,7 @@ export function AofSection({ aof }: Props) {
           Votre site vu depuis l&apos;Afrique de l&apos;Ouest
         </motion.h2>
         <motion.p className="text-[13px] text-pierre mt-1" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15 }}>
-          Google mesure les performances depuis des serveurs en Europe. Cette section simule ce que vit vraiment un visiteur à Dakar, Abidjan ou Lomé — sur mobile avec un réseau 3G standard.
+          Google mesure les performances depuis des serveurs en Europe. Cette section simule ce que vit vraiment un visiteur à Dakar, Abidjan ou Lomé — sur mobile avec un réseau 4G standard.
         </motion.p>
       </div>
 
@@ -248,7 +248,7 @@ export function AofSection({ aof }: Props) {
       {/* Summary tiles */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <SummaryTile
-          label="Chargement mobile 3G"
+          label="Chargement mobile 4G"
           value={load3G}
           explication={load3GExpl}
           ok={load3GOk}
@@ -307,7 +307,7 @@ export function AofSection({ aof }: Props) {
       >
         <p className="text-[11px] text-pierre leading-relaxed">
           <span className="font-semibold text-charbon">Comment c&apos;est calculé : </span>
-          Le temps de chargement mobile est estimé avec une latence de 300 ms et une vitesse de téléchargement d&apos;environ 1 Mbps — représentatif des réseaux mobiles 3G en Afrique de l&apos;Ouest. Ce sont des estimations ; les conditions réelles varient selon l&apos;opérateur, la ville et l&apos;heure.
+          Le temps de chargement mobile est estimé avec une latence de 100 ms et une vitesse de téléchargement d&apos;environ 5 Mbps — représentatif des réseaux mobiles 4G en Afrique de l&apos;Ouest. Ce sont des estimations ; les conditions réelles varient selon l&apos;opérateur, la ville et l&apos;heure.
         </p>
       </motion.div>
     </motion.section>

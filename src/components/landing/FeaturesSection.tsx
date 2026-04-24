@@ -16,9 +16,9 @@ const features = [
     Icon: DeviceMobile,
     title: "Santé Technique",
     description:
-      "Performance, SSL, compatibilité mobile, vitesse de chargement — tous les indicateurs techniques qui impactent votre classement Google.",
+      "SSL, Core Web Vitals (LCP, TTFB…), compatibilité mobile, poids de page — et une simulation du chargement réel sur 4G en Afrique de l'Ouest.",
     points: "30 pts",
-    checks: ["SSL actif", "Score Lighthouse", "Mobile-friendly", "Vitesse < 2s"],
+    checks: ["SSL actif", "Core Web Vitals", "Mobile-friendly", "Simulation 4G AOF"],
     featured: true,
   },
   {
@@ -51,9 +51,9 @@ const features = [
 ];
 
 const statusIcon = (i: number) => {
-  if (i === 0) return <CheckCircle weight="fill" className="text-success w-4 h-4" />;
-  if (i === 1) return <XCircle weight="fill" className="text-error w-4 h-4" />;
-  return <Warning weight="fill" className="text-warning w-4 h-4" />;
+  if (i === 0) return <CheckCircle weight="fill" className="text-success w-4 h-4" aria-hidden="true" />;
+  if (i === 1) return <XCircle weight="fill" className="text-error w-4 h-4" aria-hidden="true" />;
+  return <Warning weight="fill" className="text-warning w-4 h-4" aria-hidden="true" />;
 };
 
 export function FeaturesSection() {
@@ -63,11 +63,11 @@ export function FeaturesSection() {
     <section className="bg-parchemin pb-20">
       <div className="max-w-[1200px] mx-auto px-6">
         <div className="text-center mb-12">
-          <h2 className="font-serif text-[36px] font-medium text-noir mb-4">
+          <h2 className="font-serif text-[36px] font-medium text-noir mb-4 text-balance">
             Un diagnostic complet en 4 dimensions
           </h2>
           <p className="text-[17px] text-olive max-w-[480px] mx-auto leading-[1.60]">
-            Plus de 20 critères analysés automatiquement pour vous donner une vision claire de votre état numérique.
+            Plus de 30 critères analysés automatiquement pour vous donner une vision claire de votre état numérique.
           </p>
         </div>
 
@@ -85,13 +85,13 @@ export function FeaturesSection() {
             <div>
               <div className="flex items-center justify-between mb-6">
                 <div className="w-12 h-12 rounded-xl bg-[#e8f5ee] flex items-center justify-center">
-                  <featured.Icon weight="duotone" className="w-6 h-6 text-savane" />
+                  <featured.Icon weight="duotone" className="w-6 h-6 text-savane" aria-hidden="true" />
                 </div>
                 <span className="text-[12px] font-medium text-pierre bg-sable rounded-full px-3 py-1">
                   {featured.points}
                 </span>
               </div>
-              <h3 className="font-serif text-[28px] font-medium text-noir mb-3">
+              <h3 className="font-serif text-[28px] font-medium text-noir mb-3 text-balance">
                 {featured.title}
               </h3>
               <p className="text-[16px] text-olive leading-[1.65] max-w-[420px]">
@@ -122,14 +122,14 @@ export function FeaturesSection() {
             >
               <div className="flex items-center justify-between">
                 <div className="w-10 h-10 rounded-xl bg-[#e8f5ee] flex items-center justify-center">
-                  <f.Icon weight="duotone" className="w-5 h-5 text-savane" />
+                  <f.Icon weight="duotone" className="w-5 h-5 text-savane" aria-hidden="true" />
                 </div>
                 <span className="text-[11px] font-medium text-pierre bg-sable rounded-full px-2.5 py-1">
                   {f.points}
                 </span>
               </div>
               <div>
-                <h3 className="font-serif text-[20px] font-medium text-noir mb-2">
+                <h3 className="font-serif text-[20px] font-medium text-noir mb-2 text-balance">
                   {f.title}
                 </h3>
                 <p className="text-[14px] text-olive leading-[1.60]">

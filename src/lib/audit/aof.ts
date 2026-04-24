@@ -2,9 +2,9 @@ import type { PageSpeedResult } from "./pagespeed";
 import type { SiteCheckResult } from "@/lib/scraper/dns-check";
 import type { AofResult, AofDirective } from "./types";
 
-// Constantes réseau AOF (Afrique de l'Ouest Francophone)
-const AOF_3G_RTT_MS = 300;      // Latence RTT mobile 3G typique
-const AOF_3G_BW_KBps = 125;     // 1 Mbps / 8 = 125 Ko/s (3G courant en AOF)
+// Constantes réseau AOF (Afrique de l'Ouest Francophone) — profil 4G mobile
+const AOF_4G_RTT_MS = 100;      // Latence RTT 4G typique en AOF
+const AOF_4G_BW_KBps = 625;     // 5 Mbps / 8 = 625 Ko/s (4G courant en AOF)
 
 export function analyzeAof(
   ps: PageSpeedResult,
@@ -14,13 +14,13 @@ export function analyzeAof(
   const totalKb = ps.totalByteWeightKb;
   const ttfb = ps.ttfb ?? site.loadTimeMs ?? 800;
 
-  // Estimation du temps de chargement sur 3G AOF
+  // Estimation du temps de chargement sur 4G AOF
   // = TTFB pénalisé par la latence + transfert des données + overhead TCP/TLS
   let estimatedLoad3G_ms: number | null = null;
   if (totalKb !== null) {
-    const transferMs = (totalKb / AOF_3G_BW_KBps) * 1000;
-    const ttfbWithLatency = ttfb + AOF_3G_RTT_MS;
-    const connectionOverheadMs = AOF_3G_RTT_MS * 3;
+    const transferMs = (totalKb / AOF_4G_BW_KBps) * 1000;
+    const ttfbWithLatency = ttfb + AOF_4G_RTT_MS;
+    const connectionOverheadMs = AOF_4G_RTT_MS * 3;
     estimatedLoad3G_ms = Math.round(ttfbWithLatency + transferMs + connectionOverheadMs);
   }
 
@@ -35,9 +35,9 @@ export function analyzeAof(
   let score = 100;
 
   if (estimatedLoad3G_ms !== null) {
-    if (estimatedLoad3G_ms > 15000) score -= 40;
-    else if (estimatedLoad3G_ms > 8000) score -= 25;
-    else if (estimatedLoad3G_ms > 4000) score -= 10;
+    if (estimatedLoad3G_ms > 8000) score -= 40;
+    else if (estimatedLoad3G_ms > 4000) score -= 25;
+    else if (estimatedLoad3G_ms > 2000) score -= 10;
   }
 
   if (totalKb !== null) {
@@ -89,19 +89,19 @@ function buildDirectives(params: {
   const { estimatedLoad3G_ms, totalKb, cdnProvider, hasServiceWorker, unoptimizedImages, requestCount, ttfb } = params;
   const d: AofDirective[] = [];
 
-  // Temps de chargement 3G
-  if (estimatedLoad3G_ms !== null && estimatedLoad3G_ms > 10000) {
+  // Temps de chargement 4G
+  if (estimatedLoad3G_ms !== null && estimatedLoad3G_ms > 8000) {
     d.push({
       type: "critique",
-      titre: `${Math.round(estimatedLoad3G_ms / 1000)}s de chargement estimés sur 3G AOF`,
-      corps: `Sur un réseau mobile à Dakar, Abidjan ou Lomé, votre site met environ ${Math.round(estimatedLoad3G_ms / 1000)} secondes à s'afficher. Au-delà de 3s, 53% des visiteurs abandonnent la page — et ils ne reviennent pas.`,
-      action: "Réduire le poids de la page sous 1 Mo, activer Gzip/Brotli, et rapprocher les ressources via un CDN africain (Cloudflare, Bunny CDN).",
+      titre: `${Math.round(estimatedLoad3G_ms / 1000)}s de chargement estimés sur 4G AOF`,
+      corps: `Sur un réseau mobile 4G à Dakar, Abidjan ou Lomé, votre site met environ ${Math.round(estimatedLoad3G_ms / 1000)} secondes à s'afficher. Au-delà de 3s, 53% des visiteurs abandonnent la page — et ils ne reviennent pas.`,
+      action: "Réduire le poids de la page, activer Gzip/Brotli, et rapprocher les ressources via un CDN avec nœud africain (Cloudflare, Bunny CDN).",
     });
-  } else if (estimatedLoad3G_ms !== null && estimatedLoad3G_ms > 5000) {
+  } else if (estimatedLoad3G_ms !== null && estimatedLoad3G_ms > 3000) {
     d.push({
       type: "warning",
-      titre: `~${Math.round(estimatedLoad3G_ms / 1000)}s estimés sur 3G AOF`,
-      corps: `Avec 300 ms de latence réseau et une bande passante limitée en Afrique de l'Ouest, votre site reste lent sur mobile. L'expérience utilisateur est dégradée pour la majorité de vos visiteurs.`,
+      titre: `~${Math.round(estimatedLoad3G_ms / 1000)}s estimés sur 4G AOF`,
+      corps: `Même sur 4G, votre site reste lent en Afrique de l'Ouest. La bande passante réelle et la latence réseau dégradent l'expérience mobile de vos visiteurs.`,
       action: "Optimisez les images, différez les scripts non critiques, activez le cache navigateur.",
     });
   }
@@ -131,7 +131,7 @@ function buildDirectives(params: {
     d.push({
       type: "info",
       titre: "Pas de mode hors-ligne (Service Worker absent)",
-      corps: "Les coupures réseau sont fréquentes en Afrique de l'Ouest — pannes opérateur, zones de couverture faible, switch 3G/4G. Sans Service Worker, votre site devient totalement inaccessible lors d'une interruption. Vos concurrents avec une PWA gardent leurs utilisateurs même sans connexion.",
+      corps: "Les coupures réseau sont fréquentes en Afrique de l'Ouest — pannes opérateur, zones de couverture faible, transitions réseau. Sans Service Worker, votre site devient totalement inaccessible lors d'une interruption. Vos concurrents avec une PWA gardent leurs utilisateurs même sans connexion.",
       action: "Implémentez un Service Worker pour mettre en cache les ressources statiques. La bibliothèque Workbox (Google) simplifie cette mise en œuvre en quelques dizaines de lignes.",
     });
   }
@@ -141,7 +141,7 @@ function buildDirectives(params: {
     d.push({
       type: "warning",
       titre: `${requestCount} requêtes HTTP — chaque requête coûte 300 ms en AOF`,
-      corps: `Chaque requête nécessite un aller-retour réseau. Sur 3G AOF avec ~300 ms de RTT, ${requestCount} requêtes peuvent ajouter jusqu'à ${Math.round(requestCount * 0.3)}s de latence cumulée, avant même de télécharger quoi que ce soit.`,
+      corps: `Chaque requête nécessite un aller-retour réseau. Sur 4G AOF avec ~100 ms de RTT, ${requestCount} requêtes peuvent ajouter jusqu'à ${Math.round(requestCount * 0.1)}s de latence cumulée, avant même de télécharger quoi que ce soit.`,
       action: "Regroupez les fichiers CSS/JS (bundling), utilisez des sprites SVG, réduisez les dépendances tierces (fonts Google, analytics, widgets).",
     });
   }

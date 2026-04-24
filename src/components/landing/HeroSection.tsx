@@ -17,13 +17,13 @@ export function HeroSection() {
           transition={{ duration: 0.4, ease: [0.34, 1.56, 0.64, 1] }}
         >
           <span className="text-[12px] font-medium tracking-[0.5px] text-savane uppercase">
-            Bêta gratuit
+            Conçu pour l&apos;Afrique de l&apos;Ouest
           </span>
         </motion.div>
 
         {/* H1 */}
         <motion.h1
-          className="font-serif text-[56px] md:text-[64px] font-medium leading-[1.10] text-noir max-w-[700px] mb-6"
+          className="font-serif text-[56px] md:text-[64px] font-medium leading-[1.10] text-noir max-w-[700px] mb-6 text-balance"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
@@ -33,12 +33,12 @@ export function HeroSection() {
 
         {/* Sous-titre */}
         <motion.p
-          className="text-[18px] md:text-[20px] text-olive leading-[1.60] max-w-[560px] mb-10"
+          className="text-[18px] md:text-[20px] text-olive leading-[1.60] max-w-[580px] mb-10"
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.55, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
         >
-          Obtenez un diagnostic complet de votre présence digitale en 30 secondes — gratuitement. Aucune inscription requise.
+          Diagnostic complet en 30 secondes : SEO, vitesse, réseaux sociaux, et simulation de la performance réelle sur mobile 4G en Afrique de l&apos;Ouest. Gratuitement, sans inscription.
         </motion.p>
 
         {/* Widget */}
@@ -60,7 +60,7 @@ export function HeroSection() {
         >
           {["Gratuit", "Sans inscription", "Résultat immédiat"].map((label) => (
             <span key={label} className="text-[13px] text-pierre flex items-center gap-1.5">
-              <CheckCircle size={14} weight="fill" className="text-savane" />
+              <CheckCircle size={14} weight="fill" className="text-savane" aria-hidden="true" />
               {label}
             </span>
           ))}

@@ -298,7 +298,7 @@ export async function generateAuditPdf(data: PdfAuditData): Promise<void> {
     sectionTitle("Votre site vu depuis l'Afrique de l'Ouest");
 
     text(
-      "Google mesure les performances depuis l'Europe. Cette section simule ce que vit un visiteur à Dakar, Abidjan ou Lomé — sur mobile 3G standard.",
+      "Google mesure les performances depuis l'Europe. Cette section simule ce que vit un visiteur à Dakar, Abidjan ou Lomé — sur mobile 4G standard.",
       ML, y, { size: 9, color: C.pierre as RGB, maxWidth: CW }
     );
     y += 10;
@@ -587,7 +587,7 @@ function renderAofSection(
   // Tiles
   const tiles = [
     {
-      label: "Chargement 3G",
+      label: "Chargement 4G",
       val: aof.estimatedLoad3G_ms !== null
         ? `~${(aof.estimatedLoad3G_ms / 1000).toFixed(1)}s`
         : "N/D",

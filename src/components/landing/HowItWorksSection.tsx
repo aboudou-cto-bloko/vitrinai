@@ -18,16 +18,16 @@ const steps = [
     num: "02",
     title: "On analyse tout",
     description:
-      "Notre moteur vérifie plus de 20 points en 30 secondes chrono — performance, SEO, présence sociale, expérience visiteur.",
-    detail: "Propulsé par Google PageSpeed Insights + analyse SEO en temps réel.",
+      "Notre moteur vérifie plus de 30 critères en 30 secondes — performance, SEO, présence sociale, expérience visiteur, et simulation du chargement réel sur mobile 4G en Afrique de l'Ouest.",
+    detail: "Propulsé par Google PageSpeed Insights + analyse SEO + simulation réseau 4G AOF.",
   },
   {
     Icon: ChartBar,
     num: "03",
     title: "Recevez votre score",
     description:
-      "Rapport détaillé avec un score sur 100, un grade (A à F) et vos 3 priorités concrètes pour progresser immédiatement.",
-    detail: "Partageable par lien. Envoyable par email en PDF. Mis à jour à chaque audit.",
+      "Rapport détaillé avec un score sur 100, un grade (A à F), vos 5 priorités concrètes et une analyse de votre visibilité réelle sur les réseaux mobiles ouest-africains.",
+    detail: "Partageable par lien. Téléchargeable en PDF structuré. Mis à jour à chaque audit.",
   },
 ];
 
@@ -58,7 +58,6 @@ export function HowItWorksSection() {
 
   useEffect(() => {
     if (paused) return;
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     startCycle();
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
@@ -86,7 +85,7 @@ export function HowItWorksSection() {
               </span>
             </div>
 
-            <h2 className="font-serif text-[42px] md:text-[48px] font-medium text-ivoire leading-[1.15] mb-6">
+            <h2 className="font-serif text-[42px] md:text-[48px] font-medium text-ivoire leading-[1.15] mb-6 text-balance">
               3 étapes,<br />30 secondes
             </h2>
 
@@ -102,8 +101,9 @@ export function HowItWorksSection() {
                   onClick={() => handleStepClick(i)}
                   onMouseEnter={() => setPaused(true)}
                   onMouseLeave={() => setPaused(false)}
+                  aria-pressed={active === i}
                   className={[
-                    "flex items-center gap-4 rounded-xl px-5 py-4 text-left transition-all duration-300 group",
+                    "flex items-center gap-4 rounded-xl px-5 py-4 text-left transition-colors duration-300 group",
                     active === i
                       ? "bg-noir-eleve border border-bordure-sombre"
                       : "border border-transparent hover:border-noir-eleve",
@@ -113,17 +113,17 @@ export function HowItWorksSection() {
                     "w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors duration-300",
                     active === i ? "bg-savane" : "bg-noir-eleve group-hover:bg-[#252524]",
                   ].join(" ")}>
-                    <step.Icon weight="bold" className="w-4 h-4 text-ivoire" />
+                    <step.Icon weight="bold" className="w-4 h-4 text-ivoire" aria-hidden="true" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <span className={[
-                      "text-[11px] font-medium tracking-wider uppercase block mb-0.5 transition-colors",
+                      "text-[11px] font-medium tracking-wider uppercase block mb-0.5 transition-colors duration-300",
                       active === i ? "text-savane" : "text-pierre",
                     ].join(" ")}>
                       {step.num}
                     </span>
                     <span className={[
-                      "text-[15px] font-medium transition-colors",
+                      "text-[15px] font-medium transition-colors duration-300",
                       active === i ? "text-ivoire" : "text-argent",
                     ].join(" ")}>
                       {step.title}
@@ -131,10 +131,10 @@ export function HowItWorksSection() {
                   </div>
                   {/* Barre de progression */}
                   {active === i && (
-                    <div className="w-12 h-1 bg-noir rounded-full overflow-hidden flex-shrink-0">
+                    <div className="w-12 h-1 bg-noir rounded-full overflow-hidden flex-shrink-0" aria-hidden="true">
                       <div
-                        className="h-full bg-savane rounded-full transition-none"
-                        style={{ width: `${progress}%` }}
+                        className="h-full bg-savane rounded-full"
+                        style={{ width: `${progress}%`, transition: "width 50ms linear" }}
                       />
                     </div>
                   )}
@@ -145,14 +145,14 @@ export function HowItWorksSection() {
             <Button size="default" asChild>
               <a href="#analyser">
                 Analyser gratuitement
-                <ArrowRight weight="bold" className="w-4 h-4 ml-1" />
+                <ArrowRight weight="bold" className="w-4 h-4 ml-1" aria-hidden="true" />
               </a>
             </Button>
           </div>
 
           {/* Droite — stacked cards */}
           <div
-            className="relative h-[360px] flex items-center justify-center"
+            className="relative h-[400px] flex items-center justify-center"
             onMouseEnter={() => setPaused(true)}
             onMouseLeave={() => setPaused(false)}
           >
@@ -161,7 +161,6 @@ export function HowItWorksSection() {
 
               const visualOffset = (() => {
                 if (isActive) return 0;
-                // cartes suivantes empilées derrière vers le bas
                 const dist = (i - active + steps.length) % steps.length;
                 return dist * 18;
               })();
@@ -178,25 +177,25 @@ export function HowItWorksSection() {
                     transform: `translateY(${visualOffset}px) scale(${scale})`,
                     zIndex: zIdx,
                     opacity,
-                    transition: "all 0.55s cubic-bezier(0.4, 0, 0.2, 1)",
+                    transition: "transform 0.55s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.55s cubic-bezier(0.4, 0, 0.2, 1)",
                     transformOrigin: "top center",
                   }}
                 >
                   <div className={[
-                    "rounded-2xl p-8 border transition-all duration-500",
+                    "rounded-2xl p-8 border transition-colors duration-500",
                     isActive
                       ? "bg-noir-eleve border-bordure-sombre shadow-[rgba(0,0,0,0.5)_0px_20px_60px]"
                       : "bg-[#1c1c1b] border-[#252524]",
                   ].join(" ")}>
                     <div className="w-12 h-12 rounded-xl bg-savane/20 flex items-center justify-center mb-6">
-                      <step.Icon weight="duotone" className="w-6 h-6 text-savane" />
+                      <step.Icon weight="duotone" className="w-6 h-6 text-savane" aria-hidden="true" />
                     </div>
                     <div className="flex items-center gap-3 mb-3">
                       <span className="text-[11px] font-medium tracking-wider text-savane uppercase">
                         Étape {step.num}
                       </span>
                     </div>
-                    <h3 className="font-serif text-[26px] font-medium text-ivoire mb-3">
+                    <h3 className="font-serif text-[26px] font-medium text-ivoire mb-3 text-balance">
                       {step.title}
                     </h3>
                     <p className="text-[15px] text-argent leading-[1.65] mb-4">
