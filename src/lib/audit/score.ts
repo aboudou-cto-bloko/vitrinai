@@ -238,13 +238,22 @@ export function computeScores(
   }
 
   if (presence.hasWhatsApp) {
-    pres += 3; presChecks.push(pass("wa", "WhatsApp Business", "Détecté", "medium"));
+    const waVal = presence.whatsAppNumber ? presence.whatsAppNumber : "Détecté";
+    pres += 3; presChecks.push(pass("wa", "WhatsApp Business", waVal, "medium"));
   } else {
     presChecks.push(warn("wa", "WhatsApp non lié", "Absent", "Canal de contact privilégié en zone UEMOA.", "medium"));
   }
 
   if (presence.hasLinkedInLink) {
     pres += 2; presChecks.push(pass("li", "LinkedIn présent", presence.linkedInUrl ?? "Oui", "low"));
+  }
+
+  if (presence.hasTwitterLink) {
+    presChecks.push(pass("tw", "Twitter / X présent", presence.twitterUrl ?? "Oui", "low"));
+  }
+
+  if (presence.hasTelegramLink) {
+    presChecks.push(pass("tg", "Telegram présent", presence.telegramUrl ?? "Oui", "low"));
   }
 
   // ── UX (max 15) ──────────────────────────────────────────────────────────
