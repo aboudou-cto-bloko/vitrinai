@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Discussion générale
+    url: https://github.com/aboudou-cto-bloko/vitrinai/discussions
+    about: Questions, idées, retours d'expérience — tout ce qui n'est pas un bug ou une feature précise

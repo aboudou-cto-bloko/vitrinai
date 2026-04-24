@@ -1,0 +1,65 @@
+name: Faux positif / résultat incorrect
+description: Un critère d'audit retourne un résultat erroné pour un site spécifique
+labels: ["audit-accuracy", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Ce template est pour les cas où VitrinAI donne un score ou un statut incorrect sur un critère précis — par exemple un site avec SSL détecté comme sans SSL, ou une page Facebook non détectée alors qu'elle est présente.
+
+  - type: input
+    id: url
+    attributes:
+      label: URL du site concerné
+      placeholder: https://exemple.com
+    validations:
+      required: true
+
+  - type: dropdown
+    id: critere
+    attributes:
+      label: Critère incorrect
+      options:
+        - SSL / HTTPS
+        - Performance Lighthouse
+        - LCP / FCP / TBT / CLS / TTFB
+        - Compatibilité mobile
+        - Title / Meta description / H1
+        - Sitemap / Robots.txt
+        - Open Graph
+        - Données structurées (Schema.org)
+        - Facebook
+        - Instagram
+        - WhatsApp
+        - Google Maps
+        - LinkedIn
+        - Twitter / X
+        - Telegram
+        - YouTube / TikTok
+        - Téléphone / Email / Adresse
+        - Formulaire de contact
+        - Score AOF / simulation 4G
+        - Score global / grade
+        - Autre
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Ce que VitrinAI dit vs la réalité
+      placeholder: |
+        VitrinAI indique : "Pas de page Facebook"
+        Réalité : la page Facebook est https://facebook.com/... et est bien liée depuis le site
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: verifications
+    attributes:
+      label: Vérifications préalables
+      options:
+        - label: J'ai vérifié que ce n'est pas déjà signalé dans les issues ouvertes
+          required: true
+        - label: J'ai testé avec l'URL complète (avec https://)
+          required: false

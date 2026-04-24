@@ -1,0 +1,79 @@
+name: Feature request
+description: Proposer une nouvelle fonctionnalité ou une amélioration
+labels: ["enhancement", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Les meilleures demandes expliquent **le problème**, pas seulement la solution souhaitée.
+
+  - type: textarea
+    id: probleme
+    attributes:
+      label: Quel problème cette feature résout-elle ?
+      description: Décris la situation actuelle et ce qui est frustrant ou manquant
+      placeholder: |
+        Aujourd'hui, quand je... je ne peux pas... ce qui me force à...
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Solution proposée
+      description: Comment imagines-tu que ça pourrait fonctionner ?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: axe
+    attributes:
+      label: Axe concerné
+      options:
+        - Moteur d'audit (nouveaux critères)
+        - Rapport — affichage / visualisation
+        - Simulation AOF / réseau
+        - Détection présence sociale
+        - Export PDF
+        - Landing page
+        - Plans tarifaires / compte utilisateur
+        - API / intégration externe
+        - Performance / infrastructure
+        - Autre
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priorite
+    attributes:
+      label: Importance pour toi
+      options:
+        - Bloquant — je ne peux pas avancer sans ça
+        - Important — ça améliorerait significativement l'usage
+        - Nice-to-have — sympa mais pas urgent
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considérées
+      description: Y a-t-il d'autres façons de résoudre ce problème ?
+    validations:
+      required: false
+
+  - type: textarea
+    id: contexte
+    attributes:
+      label: Contexte supplémentaire
+      description: Captures d'écran, exemples, références à d'autres outils…
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: verifications
+    attributes:
+      label: Vérifications préalables
+      options:
+        - label: J'ai vérifié que cette feature n'est pas déjà demandée dans les issues ouvertes
+          required: true

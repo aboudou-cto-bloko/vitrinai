@@ -1,0 +1,86 @@
+name: Bug report
+description: Signaler un comportement anormal ou un résultat incorrect
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Merci de prendre le temps de signaler ce bug. Remplir ce formulaire complètement accélère le diagnostic.
+
+  - type: input
+    id: url-testee
+    attributes:
+      label: URL analysée (si applicable)
+      description: L'URL du site qui a produit le résultat incorrect
+      placeholder: https://exemple.com
+    validations:
+      required: false
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description du problème
+      description: Que s'est-il passé ? Qu'est-ce qui était attendu ?
+      placeholder: |
+        Comportement observé : ...
+        Comportement attendu : ...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: zone
+    attributes:
+      label: Zone concernée
+      options:
+        - Page d'accueil / widget d'analyse
+        - Chargement de l'audit (loader)
+        - Page de rapport — score / grade
+        - Page de rapport — Web Vitals
+        - Page de rapport — Simulation AOF
+        - Page de rapport — Recommandations
+        - Page de rapport — Détail par axe
+        - Export PDF
+        - Autre
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Étapes pour reproduire
+      placeholder: |
+        1. Aller sur ...
+        2. Entrer l'URL ...
+        3. Cliquer sur ...
+        4. Observer ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: contexte
+    attributes:
+      label: Environnement
+      placeholder: |
+        Navigateur : Chrome 124 / Firefox 125 / Safari 17
+        Appareil : Desktop / Mobile (préciser le modèle si mobile)
+        Système : macOS / Windows / iOS / Android
+    validations:
+      required: false
+
+  - type: textarea
+    id: captures
+    attributes:
+      label: Captures d'écran ou logs console
+      description: Glisser-déposer une image ou coller du texte de la console
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: verifications
+    attributes:
+      label: Vérifications préalables
+      options:
+        - label: J'ai vérifié que ce bug n'est pas déjà signalé dans les issues ouvertes
+          required: true
+        - label: J'ai testé avec une autre URL pour voir si le bug est reproductible
+          required: false
