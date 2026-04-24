@@ -69,13 +69,25 @@ export function PricingSection() {
   return (
     <section id="tarifs" className="bg-ivoire border-t border-bordure-forte py-20">
       <div className="max-w-[1200px] mx-auto px-6">
-        <div className="text-center mb-12">
-          <h2 className="font-serif text-[48px] md:text-[52px] font-medium text-noir mb-4">
+        <div className="text-center mb-12 overflow-hidden">
+          <motion.h2
+            className="font-serif text-[48px] md:text-[52px] font-medium text-noir mb-4 text-balance"
+            initial={{ opacity: 0, y: 32 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-60px" }}
+            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+          >
             Commencez gratuitement
-          </h2>
-          <p className="text-[20px] text-olive max-w-[480px] mx-auto leading-[1.60]">
+          </motion.h2>
+          <motion.p
+            className="text-[20px] text-olive max-w-[480px] mx-auto leading-[1.60]"
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-60px" }}
+            transition={{ duration: 0.5, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+          >
             L&apos;audit complet est 100&nbsp;% gratuit. Les plans avancés arrivent bientôt.
-          </p>
+          </motion.p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
@@ -86,6 +98,7 @@ export function PricingSection() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-40px" }}
               transition={{ duration: 0.5, delay: index * 0.1, ease: [0.16, 1, 0.3, 1] }}
+              whileHover={plan.available ? { y: -6, boxShadow: "rgba(0,0,0,0.10) 0px 16px 48px" } : {}}
               className={[
                 "rounded-2xl p-8 flex flex-col relative overflow-hidden",
                 plan.featured

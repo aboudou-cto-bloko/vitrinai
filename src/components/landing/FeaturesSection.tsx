@@ -62,31 +62,50 @@ export function FeaturesSection() {
   return (
     <section className="bg-parchemin pb-20">
       <div className="max-w-[1200px] mx-auto px-6">
-        <div className="text-center mb-12">
-          <h2 className="font-serif text-[36px] font-medium text-noir mb-4 text-balance">
+
+        {/* Header */}
+        <div className="text-center mb-12 overflow-hidden">
+          <motion.h2
+            className="font-serif text-[36px] font-medium text-noir mb-4 text-balance"
+            initial={{ opacity: 0, y: 32 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-60px" }}
+            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+          >
             Un diagnostic complet en 4 dimensions
-          </h2>
-          <p className="text-[17px] text-olive max-w-[480px] mx-auto leading-[1.60]">
+          </motion.h2>
+          <motion.p
+            className="text-[17px] text-olive max-w-[480px] mx-auto leading-[1.60]"
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-60px" }}
+            transition={{ duration: 0.5, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+          >
             Plus de 30 critères analysés automatiquement pour vous donner une vision claire de votre état numérique.
-          </p>
+          </motion.p>
         </div>
 
         {/* Bento grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 
-          {/* Grande carte featured */}
+          {/* Featured card */}
           <motion.div
-            className="md:col-span-2 md:row-span-2 bg-ivoire border border-bordure rounded-2xl p-8 flex flex-col justify-between shadow-[rgba(0,0,0,0.04)_0px_4px_20px]"
-            initial={{ opacity: 0, y: 24 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-40px" }}
-            transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
+            className="md:col-span-2 md:row-span-2 bg-ivoire border border-bordure rounded-2xl p-8 flex flex-col justify-between shadow-[rgba(0,0,0,0.04)_0px_4px_20px] cursor-default"
+            initial={{ opacity: 0, x: -32, y: 16 }}
+            whileInView={{ opacity: 1, x: 0, y: 0 }}
+            viewport={{ once: true, margin: "-60px" }}
+            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+            whileHover={{ y: -4, boxShadow: "rgba(0,0,0,0.10) 0px 16px 48px" }}
           >
             <div>
               <div className="flex items-center justify-between mb-6">
-                <div className="w-12 h-12 rounded-xl bg-[#e8f5ee] flex items-center justify-center">
+                <motion.div
+                  className="w-12 h-12 rounded-xl bg-[#e8f5ee] flex items-center justify-center"
+                  whileHover={{ scale: 1.1, rotate: -4 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 15 }}
+                >
                   <featured.Icon weight="duotone" className="w-6 h-6 text-savane" aria-hidden="true" />
-                </div>
+                </motion.div>
                 <span className="text-[12px] font-medium text-pierre bg-sable rounded-full px-3 py-1">
                   {featured.points}
                 </span>
@@ -99,31 +118,44 @@ export function FeaturesSection() {
               </p>
             </div>
 
-            {/* Mini checklist */}
+            {/* Checklist */}
             <div className="mt-8 grid grid-cols-2 gap-2">
               {featured.checks.map((check, i) => (
-                <div key={check} className="flex items-center gap-2 bg-white border border-bordure rounded-lg px-3 py-2.5">
+                <motion.div
+                  key={check}
+                  className="flex items-center gap-2 bg-white border border-bordure rounded-lg px-3 py-2.5"
+                  initial={{ opacity: 0, y: 10 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.4, delay: 0.3 + i * 0.07 }}
+                  whileHover={{ scale: 1.02, borderColor: "var(--color-savane)" }}
+                >
                   {statusIcon(i)}
                   <span className="text-[14px] text-charbon">{check}</span>
-                </div>
+                </motion.div>
               ))}
             </div>
           </motion.div>
 
-          {/* 3 petites cartes */}
+          {/* Small cards */}
           {rest.map((f, i) => (
             <motion.div
               key={f.title}
-              className="bg-ivoire border border-bordure rounded-2xl p-6 flex flex-col gap-4 shadow-[rgba(0,0,0,0.03)_0px_2px_12px]"
-              initial={{ opacity: 0, y: 24 }}
+              className="bg-ivoire border border-bordure rounded-2xl p-6 flex flex-col gap-4 shadow-[rgba(0,0,0,0.03)_0px_2px_12px] cursor-default"
+              initial={{ opacity: 0, y: 32 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-40px" }}
-              transition={{ duration: 0.5, delay: 0.1 + i * 0.08, ease: [0.16, 1, 0.3, 1] }}
+              transition={{ duration: 0.5, delay: 0.05 + i * 0.1, ease: [0.16, 1, 0.3, 1] }}
+              whileHover={{ y: -4, boxShadow: "rgba(0,0,0,0.08) 0px 12px 36px" }}
             >
               <div className="flex items-center justify-between">
-                <div className="w-10 h-10 rounded-xl bg-[#e8f5ee] flex items-center justify-center">
+                <motion.div
+                  className="w-10 h-10 rounded-xl bg-[#e8f5ee] flex items-center justify-center"
+                  whileHover={{ scale: 1.12, rotate: -5 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 15 }}
+                >
                   <f.Icon weight="duotone" className="w-5 h-5 text-savane" aria-hidden="true" />
-                </div>
+                </motion.div>
                 <span className="text-[11px] font-medium text-pierre bg-sable rounded-full px-2.5 py-1">
                   {f.points}
                 </span>
