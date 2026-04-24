@@ -123,9 +123,11 @@ function MetricCard({ vitKey, value, index }: { vitKey: VitalKey; value: number;
   return (
     <motion.div
       className="bg-white rounded-xl border border-bordure p-4 flex flex-col gap-3"
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay: index * 0.07, ease: [0.16, 1, 0.3, 1] }}
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-40px" }}
+      transition={{ duration: 0.45, delay: index * 0.07, ease: [0.16, 1, 0.3, 1] }}
+      whileHover={{ y: -3, boxShadow: "rgba(0,0,0,0.08) 0px 8px 24px", transition: { duration: 0.2 } }}
     >
       <div className="flex items-start justify-between gap-2">
         <div>
@@ -153,8 +155,9 @@ function MetricCard({ vitKey, value, index }: { vitKey: VitalKey; value: number;
             className="h-full rounded-full"
             style={{ backgroundColor: color }}
             initial={{ width: 0 }}
-            animate={{ width: `${barPct}%` }}
-            transition={{ duration: 0.8, delay: 0.3 + index * 0.07, ease: [0.16, 1, 0.3, 1] }}
+            whileInView={{ width: `${barPct}%` }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8, delay: 0.2 + index * 0.07, ease: [0.16, 1, 0.3, 1] }}
           />
         </div>
         <div className="flex justify-between text-[10px] text-argent">
@@ -233,7 +236,6 @@ function VitalsChart({ vitals }: { vitals: VitalsData }) {
               );
             }}
           />
-          {/* Ligne verte = zone idéale */}
           <ReferenceLine x={50} stroke="#2d7a4f" strokeDasharray="4 4" strokeOpacity={0.5} />
           <Bar dataKey="score" radius={[0, 4, 4, 0]} maxBarSize={14}>
             {data.map((entry, i) => (
@@ -255,22 +257,25 @@ export function WebVitalsSection({ vitals }: Props) {
   if (keys.length === 0) return null;
 
   return (
-    <motion.section
-      className="flex flex-col gap-4"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.4 }}
-    >
+    <section className="flex flex-col gap-4">
       <div>
         <motion.h2
-          className="text-[18px] font-semibold text-charbon"
+          className="text-[18px] font-semibold text-charbon text-balance"
           style={{ fontFamily: "Georgia, serif" }}
-          initial={{ opacity: 0, x: -8 }}
-          animate={{ opacity: 1, x: 0 }}
+          initial={{ opacity: 0, x: -12 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          viewport={{ once: true, margin: "-60px" }}
+          transition={{ duration: 0.4 }}
         >
           Vitesse et expérience utilisateur
         </motion.h2>
-        <motion.p className="text-[13px] text-pierre mt-1" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15 }}>
+        <motion.p
+          className="text-[13px] text-pierre mt-1"
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.15, duration: 0.4 }}
+        >
           Ce que vivent concrètement vos visiteurs quand ils ouvrent votre site. Chaque indicateur a un impact direct sur le nombre de clients qui restent ou qui repartent.
         </motion.p>
       </div>
@@ -278,9 +283,10 @@ export function WebVitalsSection({ vitals }: Props) {
       {/* Vue d'ensemble graphique */}
       <motion.div
         className="bg-white rounded-2xl border border-bordure p-5"
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: 0.1 }}
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-40px" }}
+        transition={{ duration: 0.45, delay: 0.1 }}
       >
         <p className="text-[12px] text-pierre mb-3">
           Plus la barre est courte et verte, mieux c&apos;est. La ligne pointillée verte = objectif à atteindre.
@@ -299,9 +305,10 @@ export function WebVitalsSection({ vitals }: Props) {
       {(vitals.totalByteWeightKb !== null || vitals.requestCount !== null) && (
         <motion.div
           className="bg-white rounded-xl border border-bordure p-5"
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.3 }}
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-40px" }}
+          transition={{ duration: 0.4, delay: 0.1 }}
         >
           <p className="text-[13px] font-semibold text-charbon mb-3">Poids de votre site</p>
           <div className="flex flex-wrap gap-4">
@@ -368,6 +375,6 @@ export function WebVitalsSection({ vitals }: Props) {
           </div>
         </motion.div>
       )}
-    </motion.section>
+    </section>
   );
 }

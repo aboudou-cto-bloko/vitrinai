@@ -30,9 +30,11 @@ function DirectiveCard({ directive, index }: { directive: AofDirective; index: n
     <motion.div
       className="rounded-xl border p-5 flex flex-col gap-3"
       style={{ backgroundColor: c.bg, borderColor: c.border }}
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay: index * 0.08 }}
+      initial={{ opacity: 0, y: 16 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-40px" }}
+      transition={{ duration: 0.4, delay: index * 0.08, ease: [0.16, 1, 0.3, 1] }}
+      whileHover={{ y: -2, boxShadow: "rgba(0,0,0,0.07) 0px 8px 20px", transition: { duration: 0.18 } }}
     >
       <div className="flex items-start gap-3">
         <div className="w-2 h-2 rounded-full mt-1.5 shrink-0" style={{ backgroundColor: c.dot }} />
@@ -131,7 +133,8 @@ function AofScoreRing({ score }: { score: number }) {
             fill="none" stroke={color} strokeWidth="8" strokeLinecap="round"
             strokeDasharray={circ}
             initial={{ strokeDashoffset: circ }}
-            animate={{ strokeDashoffset: offset }}
+            whileInView={{ strokeDashoffset: offset }}
+            viewport={{ once: true }}
             transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1], delay: 0.3 }}
           />
         </svg>
@@ -159,9 +162,11 @@ function SummaryTile({
   return (
     <motion.div
       className="bg-white rounded-xl border border-bordure px-4 py-4"
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.35, delay: 0.15 + index * 0.06 }}
+      initial={{ opacity: 0, y: 16, scale: 0.97 }}
+      whileInView={{ opacity: 1, y: 0, scale: 1 }}
+      viewport={{ once: true, margin: "-40px" }}
+      transition={{ duration: 0.4, delay: 0.1 + index * 0.07, ease: [0.34, 1.56, 0.64, 1] }}
+      whileHover={{ y: -3, boxShadow: "rgba(0,0,0,0.08) 0px 8px 20px", transition: { duration: 0.18 } }}
     >
       <div className="flex items-center gap-1.5 mb-1">
         <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: dotColor }} />
@@ -207,23 +212,26 @@ export function AofSection({ aof }: Props) {
         : "Trop lourd pour les forfaits mobiles limités.";
 
   return (
-    <motion.section
-      className="flex flex-col gap-5"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.4 }}
-    >
+    <section className="flex flex-col gap-5">
       {/* Header */}
       <div>
         <motion.h2
-          className="text-[18px] font-semibold text-charbon"
+          className="text-[18px] font-semibold text-charbon text-balance"
           style={{ fontFamily: "Georgia, serif" }}
-          initial={{ opacity: 0, x: -8 }}
-          animate={{ opacity: 1, x: 0 }}
+          initial={{ opacity: 0, x: -12 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          viewport={{ once: true, margin: "-60px" }}
+          transition={{ duration: 0.4 }}
         >
           Votre site vu depuis l&apos;Afrique de l&apos;Ouest
         </motion.h2>
-        <motion.p className="text-[13px] text-pierre mt-1" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15 }}>
+        <motion.p
+          className="text-[13px] text-pierre mt-1"
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.15, duration: 0.4 }}
+        >
           Google mesure les performances depuis des serveurs en Europe. Cette section simule ce que vit vraiment un visiteur à Dakar, Abidjan ou Lomé — sur mobile avec un réseau 4G standard.
         </motion.p>
       </div>
@@ -231,9 +239,10 @@ export function AofSection({ aof }: Props) {
       {/* Score + radar */}
       <motion.div
         className="bg-white rounded-2xl border border-bordure p-6 flex flex-col sm:flex-row items-center gap-6"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.1 }}
+        initial={{ opacity: 0, y: 24 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-40px" }}
+        transition={{ duration: 0.5, delay: 0.05, ease: [0.16, 1, 0.3, 1] }}
       >
         <div className="flex flex-col items-center gap-2 shrink-0">
           <AofScoreRing score={aof.aofScore} />
@@ -286,9 +295,10 @@ export function AofSection({ aof }: Props) {
         <div className="flex flex-col gap-3">
           <motion.h3
             className="text-[15px] font-semibold text-charbon"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3 }}
+            initial={{ opacity: 0, x: -8 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.35 }}
           >
             Ce qu&apos;il faut corriger pour vos visiteurs en AOF
           </motion.h3>
@@ -302,14 +312,15 @@ export function AofSection({ aof }: Props) {
       <motion.div
         className="bg-parchemin rounded-xl border border-bordure/50 p-4"
         initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.5 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.4, delay: 0.2 }}
       >
         <p className="text-[11px] text-pierre leading-relaxed">
           <span className="font-semibold text-charbon">Comment c&apos;est calculé : </span>
           Le temps de chargement mobile est estimé avec une latence de 100 ms et une vitesse de téléchargement d&apos;environ 5 Mbps — représentatif des réseaux mobiles 4G en Afrique de l&apos;Ouest. Ce sont des estimations ; les conditions réelles varient selon l&apos;opérateur, la ville et l&apos;heure.
         </p>
       </motion.div>
-    </motion.section>
+    </section>
   );
 }

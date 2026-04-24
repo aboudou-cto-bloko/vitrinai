@@ -104,7 +104,7 @@ const AXIS_META = {
   ux: { label: "Expérience", Icon: UserCircle, max: 15 },
 } as const;
 
-function AxisBar({ score, maxScore, delay }: { score: number; maxScore: number; delay: number }) {
+function AxisBar({ score, maxScore }: { score: number; maxScore: number }) {
   const pct = Math.round((score / maxScore) * 100);
   const barColor = pct >= 70 ? "#2d7a4f" : pct >= 40 ? "#f59e0b" : "#b53333";
   return (
@@ -113,8 +113,9 @@ function AxisBar({ score, maxScore, delay }: { score: number; maxScore: number; 
         className="h-full rounded-full"
         style={{ backgroundColor: barColor }}
         initial={{ width: 0 }}
-        animate={{ width: `${pct}%` }}
-        transition={{ duration: 0.9, delay, ease: [0.16, 1, 0.3, 1] }}
+        whileInView={{ width: `${pct}%` }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
       />
     </div>
   );
@@ -127,7 +128,8 @@ function CheckRow({ check, index }: { check: Check; index: number }) {
     <motion.li
       className="flex items-start gap-2.5 text-[13px]"
       initial={{ opacity: 0, x: -8 }}
-      animate={{ opacity: 1, x: 0 }}
+      whileInView={{ opacity: 1, x: 0 }}
+      viewport={{ once: true }}
       transition={{ duration: 0.3, delay: index * 0.05 }}
     >
       {status === "pass" ? (
@@ -163,12 +165,14 @@ function AxisCard({
     <motion.div
       className="bg-white rounded-2xl border border-bordure p-6 flex flex-col gap-4"
       initial={{ opacity: 0, y: 24 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: 0.1 + cardIndex * 0.08, ease: [0.16, 1, 0.3, 1] }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-40px" }}
+      transition={{ duration: 0.5, delay: cardIndex * 0.08, ease: [0.16, 1, 0.3, 1] }}
+      whileHover={{ y: -3, boxShadow: "rgba(0,0,0,0.08) 0px 10px 28px", transition: { duration: 0.2 } }}
     >
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-xl bg-parchemin flex items-center justify-center">
-          <Icon size={20} weight="duotone" className="text-savane" />
+          <Icon size={20} weight="duotone" className="text-savane" aria-hidden="true" />
         </div>
         <div className="flex-1">
           <div className="flex items-center justify-between">
@@ -178,7 +182,7 @@ function AxisCard({
               <span className="text-pierre font-normal">/{maxScore}</span>
             </span>
           </div>
-          <AxisBar score={score} maxScore={maxScore} delay={0.3 + cardIndex * 0.08} />
+          <AxisBar score={score} maxScore={maxScore} />
         </div>
       </div>
       <ul className="flex flex-col gap-2">
@@ -198,8 +202,10 @@ function RecoCard({ r, i }: { r: Recommandation; i: number }) {
     <motion.div
       className="bg-white rounded-xl border border-bordure p-5 flex gap-4"
       initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-40px" }}
       transition={{ duration: 0.4, delay: i * 0.07, ease: [0.16, 1, 0.3, 1] }}
+      whileHover={{ y: -2, boxShadow: "rgba(0,0,0,0.07) 0px 8px 20px", transition: { duration: 0.18 } }}
     >
       <div
         className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-[13px] font-bold text-white"
@@ -343,10 +349,11 @@ export function RapportContent({ url, scores, details, recommandations, hostname
         {recommandations.length > 0 && (
           <section className="flex flex-col gap-4">
             <motion.h2
-              className="text-[18px] font-semibold text-charbon"
+              className="text-[18px] font-semibold text-charbon text-balance"
               style={{ fontFamily: "Georgia, serif" }}
               initial={{ opacity: 0, x: -8 }}
-              animate={{ opacity: 1, x: 0 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, margin: "-60px" }}
               transition={{ duration: 0.4 }}
             >
               Priorités d&apos;amélioration
@@ -358,10 +365,11 @@ export function RapportContent({ url, scores, details, recommandations, hostname
         {/* Axis detail grid */}
         <section className="flex flex-col gap-4">
           <motion.h2
-            className="text-[18px] font-semibold text-charbon"
+            className="text-[18px] font-semibold text-charbon text-balance"
             style={{ fontFamily: "Georgia, serif" }}
             initial={{ opacity: 0, x: -8 }}
-            animate={{ opacity: 1, x: 0 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, margin: "-60px" }}
             transition={{ duration: 0.4 }}
           >
             Détail par axe
@@ -384,8 +392,9 @@ export function RapportContent({ url, scores, details, recommandations, hostname
         <motion.section
           className="bg-noir rounded-2xl p-8 text-center text-ivoire overflow-hidden relative"
           initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-40px" }}
+          transition={{ duration: 0.5 }}
         >
           {/* subtle bg glow */}
           <div className="absolute -top-12 -right-12 w-48 h-48 rounded-full bg-savane/10 blur-3xl pointer-events-none" />
