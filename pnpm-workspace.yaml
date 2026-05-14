@@ -1,4 +1,3 @@
 ignoredBuiltDependencies:
   - sharp
   - unrs-resolver
-storeDir: /home/aboudou/.pnpm-store
