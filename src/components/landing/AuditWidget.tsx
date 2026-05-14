@@ -66,9 +66,6 @@ const STEPS = [
   { Icon: DeviceMobile,   label: "Expérience mobile",        sub: "Accessibilité, formulaires…"   },
 ];
 
-const POLL_INTERVAL = 2500;
-const MAX_POLLS = 24;
-
 // ── Component ─────────────────────────────────────────────────────────────────
 export function AuditWidget() {
   const router = useRouter();
@@ -106,53 +103,33 @@ export function AuditWidget() {
     setLoading(true);
     setStep(0);
 
-    let auditId: string;
+    // Lance l'audit — navigation immédiate vers le rapport dès que l'ID est créé
+    // Le RapportPoller prend le relai pour attendre la fin de l'analyse
     try {
       const res = await fetch("/api/audit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url: finalUrl }),
       });
-      const data = await res.json();
+      const data = await res.json() as { auditId?: string; error?: string; requiresSignup?: boolean };
       if (!res.ok) {
-        toast.error(data.error ?? "Erreur lors du lancement de l'audit.", { duration: 5000 });
+        if (data.requiresSignup) {
+          toast.error("Créez un compte gratuit pour continuer — 2 crédits offerts.", {
+            duration: 6000,
+            action: { label: "Créer un compte", onClick: () => router.push("/signup") },
+          });
+        } else {
+          toast.error(data.error ?? "Erreur lors du lancement de l'audit.", { duration: 5000 });
+        }
         setLoading(false);
         return;
       }
-      auditId = data.auditId;
+      // Optimistic : on navigue immédiatement, le rapport affiche son propre loader
+      router.push(`/rapport/${data.auditId}`);
     } catch {
       toast.error("Impossible de contacter le serveur. Vérifiez votre connexion.", { duration: 5000 });
       setLoading(false);
-      return;
     }
-
-    let polls = 0;
-    const interval = setInterval(async () => {
-      polls++;
-      setStep((s) => (s + 1) % STEPS.length);
-
-      try {
-        const res = await fetch(`/api/audit/status/${auditId}`);
-        const data = await res.json();
-
-        if (data.statut === "terminé") {
-          clearInterval(interval);
-          router.push(`/rapport/${auditId}`);
-          return;
-        }
-        if (data.statut === "erreur" || polls >= MAX_POLLS) {
-          clearInterval(interval);
-          toast.error("L'audit a échoué. Vérifiez l'URL et réessayez.", { duration: 6000 });
-          setLoading(false);
-        }
-      } catch {
-        if (polls >= MAX_POLLS) {
-          clearInterval(interval);
-          toast.error("Délai d'attente dépassé. Réessayez dans quelques instants.", { duration: 6000 });
-          setLoading(false);
-        }
-      }
-    }, POLL_INTERVAL);
   }
 
   const progress = ((step + 1) / STEPS.length) * 85 + 10;

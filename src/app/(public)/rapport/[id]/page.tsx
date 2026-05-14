@@ -4,6 +4,7 @@ import { api } from "@/../convex/_generated/api";
 import type { Id } from "@/../convex/_generated/dataModel";
 import { RapportPoller } from "./RapportPoller";
 import { RapportContent } from "./RapportContent";
+import { RapportUpsell } from "./RapportUpsell";
 import type { Metadata } from "next";
 import type { AuditDetails, AuditScores, Recommandation } from "@/lib/audit/types";
 
@@ -105,12 +106,15 @@ export default async function RapportPage({
   const hostname = new URL(url).hostname;
 
   return (
-    <RapportContent
-      url={url}
-      scores={scores}
-      details={details}
-      recommandations={recommandations}
-      hostname={hostname}
-    />
+    <>
+      <RapportContent
+        url={url}
+        scores={scores}
+        details={details}
+        recommandations={recommandations}
+        hostname={hostname}
+      />
+      <RapportUpsell analyzedUrl={url} />
+    </>
   );
 }

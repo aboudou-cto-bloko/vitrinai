@@ -69,8 +69,17 @@ export function Navbar() {
               </Link>
               <Link
                 href="/credits"
-                className="hidden sm:block text-[14px] text-olive hover:text-noir transition-colors"
+                className="hidden sm:flex items-center gap-1.5 text-[14px] text-olive hover:text-noir transition-colors"
               >
+                {me !== undefined && (
+                  <span className={`inline-flex items-center justify-center h-5 min-w-5 px-1.5 rounded-full text-[11px] font-semibold tabular-nums ${
+                    (me?.creditsBalance ?? 0) <= 1
+                      ? "bg-red-100 text-red-700"
+                      : "bg-savane/10 text-savane"
+                  }`}>
+                    {me?.creditsBalance ?? 0}
+                  </span>
+                )}
                 Crédits
               </Link>
               <Button size="sm" asChild>

@@ -95,13 +95,25 @@ export function computeScores(
     techChecks.push(warn("favicon", "Favicon manquant", "Non", "Impacte la reconnaissance de marque.", "low"));
   }
 
-  // Best practices (2 pts)
-  const bp = ps.bestPractices;
-  if (!ps.isEstimate) {
-    if (bp >= 80) { tech += 2; techChecks.push(pass("bp", "Bonnes pratiques web", `${bp}/100`, "low")); }
-    else { techChecks.push(warn("bp", "Bonnes pratiques insuffisantes", `${bp}/100`, "HTTPS, console errors, libraries à jour.", "low")); }
+  // En-têtes de sécurité HTTP (4 pts)
+  const sh = site.securityHeaders;
+  const shPassed = [sh.hsts, sh.xFrameOptions, sh.xContentTypeOptions, sh.csp, sh.referrerPolicy].filter(Boolean).length;
+  const shLabels = [
+    sh.hsts && "HSTS",
+    sh.xFrameOptions && "X-Frame",
+    sh.xContentTypeOptions && "X-Content-Type",
+    sh.csp && "CSP",
+    sh.referrerPolicy && "Referrer-Policy",
+  ].filter(Boolean).join(", ") || "Aucun";
+
+  if (shPassed >= 4) {
+    tech += 4; techChecks.push(pass("security", "En-têtes de sécurité", shLabels, "high"));
+  } else if (shPassed >= 2) {
+    tech += 2; techChecks.push(warn("security", "En-têtes de sécurité insuffisants", `${shPassed}/5 — ${shLabels}`, "Ajoutez HSTS, Content-Security-Policy et X-Frame-Options.", "high"));
+  } else if (shPassed === 1) {
+    tech += 1; techChecks.push(warn("security", "En-têtes de sécurité manquants", `${shPassed}/5`, "Votre site est exposé au clickjacking et aux injections.", "high"));
   } else {
-    tech += 1;
+    techChecks.push(fail("security", "Aucun en-tête de sécurité", "0/5", "Configurez HSTS, CSP, X-Frame-Options, X-Content-Type-Options.", "high"));
   }
 
   // TTFB (2 pts)

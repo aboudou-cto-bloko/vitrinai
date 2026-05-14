@@ -1,3 +1,11 @@
+export interface SecurityHeaders {
+  hsts: boolean;
+  xFrameOptions: boolean;
+  xContentTypeOptions: boolean;
+  csp: boolean;
+  referrerPolicy: boolean;
+}
+
 export interface SiteCheckResult {
   exists: boolean;
   hasSSL: boolean;
@@ -6,6 +14,7 @@ export interface SiteCheckResult {
   loadTimeMs: number | null;
   finalUrl: string;
   cdnProvider: string | null;
+  securityHeaders: SecurityHeaders;
   error?: string;
 }
 
@@ -47,6 +56,14 @@ export async function checkSiteExists(url: string): Promise<SiteCheckResult> {
     const loadTimeMs = Date.now() - start;
     const cdnProvider = detectCdn(res.headers);
 
+    const securityHeaders: SecurityHeaders = {
+      hsts: !!res.headers.get("strict-transport-security"),
+      xFrameOptions: !!(res.headers.get("x-frame-options") || (res.headers.get("content-security-policy") ?? "").includes("frame-ancestors")),
+      xContentTypeOptions: res.headers.get("x-content-type-options")?.toLowerCase() === "nosniff",
+      csp: !!res.headers.get("content-security-policy"),
+      referrerPolicy: !!res.headers.get("referrer-policy"),
+    };
+
     let redirectsToHttps = hasSSL;
     if (!hasSSL) {
       try {
@@ -74,6 +91,7 @@ export async function checkSiteExists(url: string): Promise<SiteCheckResult> {
       loadTimeMs,
       finalUrl: res.url || finalUrl,
       cdnProvider,
+      securityHeaders,
     };
   } catch (err) {
     return {
@@ -84,6 +102,7 @@ export async function checkSiteExists(url: string): Promise<SiteCheckResult> {
       loadTimeMs: null,
       finalUrl,
       cdnProvider: null,
+      securityHeaders: { hsts: false, xFrameOptions: false, xContentTypeOptions: false, csp: false, referrerPolicy: false },
       error: err instanceof Error ? err.message : "Connexion impossible",
     };
   }
