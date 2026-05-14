@@ -74,6 +74,8 @@ export async function POST(req: NextRequest) {
       auditId: auditId as any,
     });
 
+    const remainingCredits = user.creditsBalance - 1;
+
     after(async () => {
       try {
         const result = await runAudit(url);
@@ -90,7 +92,10 @@ export async function POST(req: NextRequest) {
       }
     });
 
-    return NextResponse.json({ auditId });
+    return NextResponse.json({
+      auditId,
+      ...(remainingCredits <= 2 && { lowBalance: remainingCredits }),
+    });
   }
 
   // ── Anonyme : URL déjà en cache → résultat gratuit mais verrouillé ──────────

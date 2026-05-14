@@ -2,7 +2,11 @@
 
 import Link from "next/link";
 import { motion } from "motion/react";
-import { Check } from "@phosphor-icons/react";
+import { Check, CircleNotch } from "@phosphor-icons/react";
+import { useSession } from "@/lib/auth-client";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { toast } from "sonner";
 
 const packs = [
   {
@@ -53,6 +57,35 @@ const included = [
 ];
 
 export function PricingSection() {
+  const { data: session } = useSession();
+  const router = useRouter();
+  const [loading, setLoading] = useState<string | null>(null);
+
+  async function handleBuy(packId: string) {
+    if (!session) {
+      router.push(`/signup?pack=${packId}`);
+      return;
+    }
+    setLoading(packId);
+    try {
+      const res = await fetch("/api/payment/initiate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ packId }),
+      });
+      const data = await res.json() as { checkoutUrl?: string; error?: string };
+      if (!res.ok || !data.checkoutUrl) {
+        toast.error(data.error ?? "Erreur lors de l'initialisation du paiement");
+        return;
+      }
+      router.push(data.checkoutUrl);
+    } catch {
+      toast.error("Erreur réseau. Réessayez.");
+    } finally {
+      setLoading(null);
+    }
+  }
+
   return (
     <section id="tarifs" className="bg-ivoire border-t border-bordure-forte py-20">
       <div className="max-w-[1200px] mx-auto px-6">
@@ -130,17 +163,23 @@ export function PricingSection() {
                 {pack.price} XOF · {pack.pricePerCredit} XOF/crédit
               </p>
 
-              <Link
-                href="/signup"
+              <button
+                onClick={() => handleBuy(pack.id)}
+                disabled={loading === pack.id}
                 className={[
-                  "mt-auto w-full h-9 rounded-xl text-[13px] font-medium flex items-center justify-center transition-colors",
+                  "mt-auto w-full h-9 rounded-xl text-[13px] font-medium flex items-center justify-center gap-1.5 transition-colors disabled:opacity-60",
                   pack.highlight
                     ? "bg-savane text-white hover:bg-savane/90"
                     : "bg-parchemin text-charbon border border-bordure hover:bg-sable",
                 ].join(" ")}
               >
-                Acheter
-              </Link>
+                {loading === pack.id ? (
+                  <>
+                    <CircleNotch size={13} className="animate-spin" />
+                    Redirection…
+                  </>
+                ) : session ? "Acheter" : "Commencer"}
+              </button>
             </motion.div>
           ))}
         </div>

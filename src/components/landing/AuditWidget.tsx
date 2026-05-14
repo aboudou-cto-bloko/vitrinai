@@ -111,7 +111,7 @@ export function AuditWidget() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url: finalUrl }),
       });
-      const data = await res.json() as { auditId?: string; gated?: boolean; error?: string; requiresSignup?: boolean };
+      const data = await res.json() as { auditId?: string; gated?: boolean; lowBalance?: number; error?: string; requiresSignup?: boolean };
       if (!res.ok) {
         if (data.requiresSignup) {
           toast.error("Créez un compte gratuit pour continuer — 2 crédits offerts.", {
@@ -123,6 +123,18 @@ export function AuditWidget() {
         }
         setLoading(false);
         return;
+      }
+      if (data.lowBalance !== undefined) {
+        const n = data.lowBalance;
+        toast.warning(
+          n === 0
+            ? "Plus de crédits — rechargez pour continuer."
+            : `Il vous reste ${n} crédit${n > 1 ? "s" : ""} — pensez à recharger.`,
+          {
+            duration: 7000,
+            action: { label: "Recharger", onClick: () => router.push("/credits") },
+          }
+        );
       }
       // Optimistic : on navigue immédiatement, le rapport affiche son propre loader
       const suffix = data.gated ? "?gated=1" : "";

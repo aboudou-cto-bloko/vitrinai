@@ -282,7 +282,10 @@ function ShareButton() {
 }
 
 // ── Gate overlay ──────────────────────────────────────────────────────────────
-function GateOverlay() {
+function GateOverlay({ recommandations }: { recommandations: Recommandation[] }) {
+  const highCount = recommandations.filter((r) => r.impact === "high").length;
+  const totalCount = recommandations.length;
+
   return (
     <motion.div
       className="absolute inset-0 flex items-center justify-center z-10"
@@ -297,6 +300,15 @@ function GateOverlay() {
         <h3 className="text-[18px] font-semibold text-charbon mb-2" style={{ fontFamily: "Georgia, serif" }}>
           Débloquez l&apos;analyse complète
         </h3>
+        {totalCount > 0 && (
+          <p className="text-[13px] text-pierre mb-3">
+            <span className="font-semibold text-charbon">{totalCount} recommandation{totalCount > 1 ? "s" : ""}</span>
+            {highCount > 0 && (
+              <> dont <span className="font-semibold text-error">{highCount} à impact fort</span></>
+            )}
+            {" "}sont disponibles pour ce site.
+          </p>
+        )}
         <p className="text-[13px] text-pierre mb-1">
           Créez un compte gratuit et obtenez
         </p>
@@ -426,7 +438,7 @@ export function RapportContent({ url, scores, details, recommandations, hostname
                 </div>
               </section>
             </div>
-            <GateOverlay />
+            <GateOverlay recommandations={recommandations} />
           </div>
         ) : (
           <>
