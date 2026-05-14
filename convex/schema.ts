@@ -74,6 +74,11 @@ export default defineSchema({
     ),
     details: v.optional(v.any()),
     recommandations: v.optional(v.array(v.string())),
+    theme: v.optional(v.object({
+      preset: v.string(),
+      companyName: v.optional(v.string()),
+      accentHex: v.optional(v.string()),
+    })),
     createdAt: v.number(),
   })
     .index("by_url", ["url"])

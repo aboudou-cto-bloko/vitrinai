@@ -93,6 +93,65 @@ export const recordAnonymousAudit = mutation({
   },
 });
 
+// ── Personnalisation du thème (coûte des crédits pour les presets premium) ───
+
+const PRESET_CREDIT_COSTS: Record<string, number> = {
+  standard: 0,
+  corporate: 3,
+  modern: 3,
+  brand: 5,
+};
+
+export const applyTheme = mutation({
+  args: {
+    auditId: v.id("audits"),
+    preset: v.string(),
+    companyName: v.optional(v.string()),
+    accentHex: v.optional(v.string()),
+  },
+  handler: async (ctx, { auditId, preset, companyName, accentHex }) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Non authentifié");
+
+    const audit = await ctx.db.get(auditId);
+    if (!audit) throw new Error("Audit introuvable");
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_better_auth_user_id", (q) =>
+        q.eq("better_auth_user_id", identity.subject)
+      )
+      .unique();
+    if (!user) throw new Error("Utilisateur introuvable");
+    if (audit.userId !== user._id) throw new Error("Non autorisé");
+
+    const cost = PRESET_CREDIT_COSTS[preset] ?? 0;
+
+    // Facturer uniquement si on change vers un preset différent (ou si aucun thème)
+    const currentPreset = audit.theme?.preset ?? "standard";
+    if (cost > 0 && currentPreset !== preset) {
+      if (user.creditsBalance < cost) throw new Error("Solde insuffisant");
+      const balanceAfter = user.creditsBalance - cost;
+      await ctx.db.patch(user._id, { creditsBalance: balanceAfter });
+      await ctx.db.insert("creditTransactions", {
+        userId: user._id,
+        type: "debit",
+        amount: -cost,
+        balanceAfter,
+        description: `Thème rapport "${preset}" appliqué`,
+        auditId,
+        createdAt: Date.now(),
+      });
+    }
+
+    await ctx.db.patch(auditId, {
+      theme: { preset, companyName, accentHex },
+    });
+
+    return { success: true };
+  },
+});
+
 // ── Dernier audit terminé pour une URL donnée (cache) ────────────────────────
 
 export const getLatestByUrl = query({

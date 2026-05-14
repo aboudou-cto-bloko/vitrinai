@@ -7,15 +7,19 @@ import { RapportContent } from "./RapportContent";
 import { RapportUpsell } from "./RapportUpsell";
 import type { Metadata } from "next";
 import type { AuditDetails, AuditScores, Recommandation } from "@/lib/audit/types";
+import type { ReportThemeConfig } from "@/lib/report-themes";
+import { fetchAuthQuery, isAuthenticated } from "@/lib/auth-server";
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
 interface AuditData {
+  userId?: Id<"users">;
   url: string;
   scores: AuditScores;
   details: AuditDetails;
   recommandations: Recommandation[];
   createdAt: number;
+  theme?: ReportThemeConfig;
 }
 
 type FetchResult =
@@ -39,11 +43,13 @@ async function fetchAudit(id: string): Promise<FetchResult> {
     return {
       state: "done",
       data: {
+        userId: audit.userId,
         url: audit.url,
         scores: audit.scores as AuditScores,
         details: audit.details as AuditDetails,
         recommandations,
         createdAt: audit.createdAt,
+        theme: audit.theme as ReportThemeConfig | undefined,
       },
     };
   } catch {
@@ -105,18 +111,28 @@ export default async function RapportPage({
   if (result.state === "error") notFound();
   if (result.state === "pending") return <RapportPoller id={id} />;
 
-  const { url, scores, details, recommandations } = result.data;
+  const { url, scores, details, recommandations, userId, theme } = result.data;
   const hostname = new URL(url).hostname;
+
+  // Vérifier si l'utilisateur connecté est propriétaire de cet audit
+  let isOwner = false;
+  if (userId && (await isAuthenticated())) {
+    const me = await fetchAuthQuery(api.credits.getMe);
+    isOwner = !!me && me._id === userId;
+  }
 
   return (
     <>
       <RapportContent
+        auditId={id}
         url={url}
         scores={scores}
         details={details}
         recommandations={recommandations}
         hostname={hostname}
         gated={gated === "1"}
+        initialTheme={theme ?? { preset: "standard" }}
+        isOwner={isOwner}
       />
       <RapportUpsell analyzedUrl={url} />
     </>
