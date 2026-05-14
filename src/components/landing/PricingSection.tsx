@@ -75,12 +75,13 @@ export function PricingSection() {
       });
       const data = await res.json() as { checkoutUrl?: string; error?: string };
       if (!res.ok || !data.checkoutUrl) {
-        toast.error(data.error ?? "Erreur lors de l'initialisation du paiement");
+        toast.error(data.error ?? "Erreur lors de l'initialisation du paiement.");
         return;
       }
       router.push(data.checkoutUrl);
-    } catch {
-      toast.error("Erreur réseau. Réessayez.");
+    } catch (err) {
+      console.error("[PricingSection] handleBuy error:", err);
+      toast.error("Impossible de contacter le serveur. Vérifiez votre connexion.");
     } finally {
       setLoading(null);
     }

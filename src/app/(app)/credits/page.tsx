@@ -43,8 +43,9 @@ export default function CreditsPage() {
         return;
       }
       router.push(data.checkoutUrl);
-    } catch {
-      toast.error("Erreur réseau. Réessayez.");
+    } catch (err) {
+      console.error("[credits] handleBuy error:", err);
+      toast.error("Impossible de contacter le serveur. Vérifiez votre connexion.");
     } finally {
       setLoading(null);
     }

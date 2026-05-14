@@ -31,24 +31,37 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Utilisateur introuvable" }, { status: 404 });
   }
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  const appUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000").replace(/\/$/, "");
 
-  const payment = await moneroo.payments.initialize({
-    amount: pack.price,
-    currency: "XOF",
-    description: `VitrinAI — Pack ${pack.label} (${pack.credits} crédits)`,
-    return_url: `${appUrl}/credits/confirmation?pack=${packId}`,
-    customer: {
-      email: user.email,
-      first_name: user.name ?? user.email.split("@")[0] ?? "Client",
-      last_name: "",
-    },
-    metadata: {
-      userId: String(user._id),
-      packId,
-      credits: String(pack.credits),
-    },
-  });
+  let payment: Awaited<ReturnType<typeof moneroo.payments.initialize>>;
+  try {
+    const nameParts = (user.name ?? user.email.split("@")[0] ?? "Client").trim().split(/\s+/);
+    const firstName = nameParts[0] ?? "Client";
+    const lastName = nameParts.slice(1).join(" ") || firstName;
+
+    payment = await moneroo.payments.initialize({
+      amount: pack.price,
+      currency: "XOF",
+      description: `VitrinAI — Pack ${pack.label} (${pack.credits} crédits)`,
+      return_url: `${appUrl}/credits/confirmation?pack=${packId}`,
+      customer: {
+        email: user.email,
+        first_name: firstName,
+        last_name: lastName,
+      },
+      metadata: {
+        userId: String(user._id),
+        packId,
+        credits: String(pack.credits),
+      },
+    });
+  } catch (err) {
+    console.error("[payment/initiate] Moneroo error:", err);
+    return NextResponse.json(
+      { error: "Impossible d'initialiser le paiement. Réessayez dans quelques instants." },
+      { status: 502 }
+    );
+  }
 
   // Enregistrer le paiement en attente
   await fetchAuthMutation(api.payments.createPending, {
