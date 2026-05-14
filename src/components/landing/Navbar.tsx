@@ -4,9 +4,13 @@ import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { useSession } from "@/lib/auth-client";
+import { useQuery } from "convex/react";
+import { api } from "@/../convex/_generated/api";
 
 export function Navbar() {
   const { data: session } = useSession();
+  const me = useQuery(api.credits.getMe);
+  const isAdmin = me?.role === "admin";
 
   return (
     <header className="sticky top-0 z-50 bg-parchemin border-b border-bordure">
@@ -49,6 +53,14 @@ export function Navbar() {
         <div className="flex items-center gap-3">
           {session ? (
             <>
+              {isAdmin && (
+                <Link
+                  href="/admin"
+                  className="hidden sm:flex items-center h-7 px-2.5 rounded-md bg-amber-50 border border-amber-200 text-[12px] font-medium text-amber-700 hover:bg-amber-100 transition-colors"
+                >
+                  Admin
+                </Link>
+              )}
               <Link
                 href="/analyses"
                 className="hidden sm:block text-[14px] text-olive hover:text-noir transition-colors"

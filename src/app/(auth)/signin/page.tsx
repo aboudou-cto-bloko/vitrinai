@@ -5,11 +5,13 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { signIn } from "@/lib/auth-client";
 import { toast } from "sonner";
+import { Eye, EyeSlash } from "@phosphor-icons/react";
 
 export default function SignInPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -21,7 +23,10 @@ export default function SignInPage() {
         toast.error(error.message ?? "Email ou mot de passe incorrect");
         return;
       }
-      router.push("/credits");
+      // Vérifier le rôle pour rediriger vers /admin si admin
+      const res = await fetch("/api/me");
+      const data = await res.json() as { role?: string };
+      router.push(data.role === "admin" ? "/admin" : "/analyses");
     } finally {
       setLoading(false);
     }
@@ -56,16 +61,26 @@ export default function SignInPage() {
             <label className="text-[13px] font-medium text-charbon" htmlFor="password">
               Mot de passe
             </label>
-            <input
-              id="password"
-              type="password"
-              required
-              autoComplete="current-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full h-10 px-3 rounded-lg border border-bordure text-[14px] text-charbon bg-white focus:outline-none focus:ring-2 focus:ring-savane/30 focus:border-savane transition-colors"
-              placeholder="••••••••"
-            />
+            <div className="relative">
+              <input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                required
+                autoComplete="current-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full h-10 px-3 pr-10 rounded-lg border border-bordure text-[14px] text-charbon bg-white focus:outline-none focus:ring-2 focus:ring-savane/30 focus:border-savane transition-colors"
+                placeholder="••••••••"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-argent hover:text-olive transition-colors"
+                tabIndex={-1}
+              >
+                {showPassword ? <EyeSlash size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           </div>
 
           <button

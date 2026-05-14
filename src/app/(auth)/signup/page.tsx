@@ -5,12 +5,14 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { signUp } from "@/lib/auth-client";
 import { toast } from "sonner";
+import { Eye, EyeSlash } from "@phosphor-icons/react";
 
 export default function SignUpPage() {
   const router = useRouter();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -27,7 +29,7 @@ export default function SignUpPage() {
         return;
       }
       toast.success("Compte créé — 2 crédits offerts !");
-      router.push("/credits");
+      router.push("/analyses");
     } finally {
       setLoading(false);
     }
@@ -77,16 +79,26 @@ export default function SignUpPage() {
             <label className="text-[13px] font-medium text-charbon" htmlFor="password">
               Mot de passe
             </label>
-            <input
-              id="password"
-              type="password"
-              required
-              autoComplete="new-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full h-10 px-3 rounded-lg border border-bordure text-[14px] text-charbon bg-white focus:outline-none focus:ring-2 focus:ring-savane/30 focus:border-savane transition-colors"
-              placeholder="8 caractères minimum"
-            />
+            <div className="relative">
+              <input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                required
+                autoComplete="new-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full h-10 px-3 pr-10 rounded-lg border border-bordure text-[14px] text-charbon bg-white focus:outline-none focus:ring-2 focus:ring-savane/30 focus:border-savane transition-colors"
+                placeholder="8 caractères minimum"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-argent hover:text-olive transition-colors"
+                tabIndex={-1}
+              >
+                {showPassword ? <EyeSlash size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
             <p className="text-[12px] text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mt-2 leading-relaxed">
               ⚠️ Il n&apos;y a pas de réinitialisation de mot de passe pour l&apos;instant. Conservez précieusement ce mot de passe.
             </p>
