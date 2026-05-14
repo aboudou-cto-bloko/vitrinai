@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -8,9 +9,12 @@ import {
   Gear,
   MapTrifold,
 } from "@phosphor-icons/react/dist/ssr";
+import { fetchAuthQuery } from "@/lib/auth-server";
+import { api } from "@/../convex/_generated/api";
 
 const NAV = [
   { href: "/admin", label: "Vue d'ensemble", Icon: ChartBar },
+  { href: "/admin/utilisateurs", label: "Utilisateurs", Icon: Users },
   { href: "/admin/crm/niches", label: "Niches", Icon: MapTrifold },
   { href: "/admin/crm/leads", label: "Leads", Icon: Users },
   { href: "/admin/crm/kanban", label: "Kanban", Icon: MagnifyingGlass },
@@ -18,7 +22,13 @@ const NAV = [
   { href: "/admin/settings", label: "Paramètres", Icon: Gear },
 ];
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+  const user = await fetchAuthQuery(api.credits.getMe);
+
+  if (!user || user.role !== "admin") {
+    redirect("/");
+  }
+
   return (
     <div className="flex min-h-screen bg-parchemin">
       {/* Sidebar */}
@@ -41,7 +51,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           ))}
         </nav>
         <div className="px-5 py-4 border-t border-bordure-sombre">
-          <p className="text-[11px] text-pierre">VitrinAI — Admin</p>
+          <p className="text-[11px] text-pierre">{user.email}</p>
         </div>
       </aside>
 

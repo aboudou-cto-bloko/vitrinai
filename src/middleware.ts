@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { isAuthenticated, fetchAuthQuery } from "@/lib/auth-server";
-import { api } from "@/../convex/_generated/api";
+import { isAuthenticated } from "@/lib/auth-server";
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
@@ -10,11 +9,7 @@ export async function middleware(req: NextRequest) {
     if (!authenticated) {
       return NextResponse.redirect(new URL("/signin", req.url));
     }
-
-    const user = await fetchAuthQuery(api.credits.getMe);
-    if (user?.role !== "admin") {
-      return NextResponse.redirect(new URL("/", req.url));
-    }
+    // La vérification du rôle admin se fait dans le layout /admin (Server Component)
   }
 
   return NextResponse.next();
