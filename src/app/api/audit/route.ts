@@ -93,6 +93,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ auditId });
   }
 
+  // ── Anonyme : URL déjà en cache → résultat gratuit mais verrouillé ──────────
+  const cached = await convex.query(api.audits.getLatestByUrl, { url });
+  if (cached) {
+    return NextResponse.json({ auditId: cached._id, gated: true });
+  }
+
   // ── Anonyme : 1 audit gratuit par IP via Convex ───────────────────────────
   const alreadyUsed = await convex.query(api.audits.hasAnonymousAudit, { ip });
   if (alreadyUsed) {

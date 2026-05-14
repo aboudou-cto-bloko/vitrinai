@@ -111,7 +111,7 @@ export function AuditWidget() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url: finalUrl }),
       });
-      const data = await res.json() as { auditId?: string; error?: string; requiresSignup?: boolean };
+      const data = await res.json() as { auditId?: string; gated?: boolean; error?: string; requiresSignup?: boolean };
       if (!res.ok) {
         if (data.requiresSignup) {
           toast.error("Créez un compte gratuit pour continuer — 2 crédits offerts.", {
@@ -125,7 +125,8 @@ export function AuditWidget() {
         return;
       }
       // Optimistic : on navigue immédiatement, le rapport affiche son propre loader
-      router.push(`/rapport/${data.auditId}`);
+      const suffix = data.gated ? "?gated=1" : "";
+      router.push(`/rapport/${data.auditId}${suffix}`);
     } catch {
       toast.error("Impossible de contacter le serveur. Vérifiez votre connexion.", { duration: 5000 });
       setLoading(false);

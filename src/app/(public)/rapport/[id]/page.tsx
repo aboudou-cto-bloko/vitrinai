@@ -94,10 +94,13 @@ export async function generateMetadata({
 
 export default async function RapportPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ gated?: string }>;
 }) {
   const { id } = await params;
+  const { gated } = await searchParams;
   const result = await fetchAudit(id);
   if (result.state === "error") notFound();
   if (result.state === "pending") return <RapportPoller id={id} />;
@@ -113,6 +116,7 @@ export default async function RapportPage({
         details={details}
         recommandations={recommandations}
         hostname={hostname}
+        gated={gated === "1"}
       />
       <RapportUpsell analyzedUrl={url} />
     </>

@@ -92,3 +92,17 @@ export const recordAnonymousAudit = mutation({
     });
   },
 });
+
+// ── Dernier audit terminé pour une URL donnée (cache) ────────────────────────
+
+export const getLatestByUrl = query({
+  args: { url: v.string() },
+  handler: async (ctx, { url }) => {
+    return ctx.db
+      .query("audits")
+      .withIndex("by_url", (q) => q.eq("url", url))
+      .filter((q) => q.eq(q.field("statut"), "terminé"))
+      .order("desc")
+      .first();
+  },
+});
