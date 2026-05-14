@@ -1,34 +1,41 @@
+"use client";
+
 import Link from "next/link";
+import { useQuery } from "convex/react";
+import { api } from "@/../convex/_generated/api";
 import {
   Users,
   Megaphone,
   MapTrifold,
   TrendUp,
+  CurrencyCircleDollar,
   ArrowRight,
-} from "@phosphor-icons/react/dist/ssr";
-
-const STATS = [
-  { label: "Niches actives", value: "0", sub: "marchés ciblés", Icon: MapTrifold, href: "/admin/crm/niches" },
-  { label: "Leads détectés", value: "0", sub: "entreprises sans site", Icon: Users, href: "/admin/crm/leads" },
-  { label: "Campagnes lancées", value: "0", sub: "messages envoyés", Icon: Megaphone, href: "/admin/campagnes" },
-  { label: "Taux de conversion", value: "—", sub: "leads convertis", Icon: TrendUp, href: "/admin/crm/kanban" },
-];
+} from "@phosphor-icons/react";
 
 export default function AdminPage() {
+  const stats = useQuery(api.credits.getUserStats);
+
+  const STATS = [
+    { label: "Utilisateurs", value: stats?.totalUsers ?? "—", sub: "comptes créés", Icon: Users, href: "/admin/utilisateurs" },
+    { label: "Audits lancés", value: stats?.totalAudits ?? "—", sub: "depuis le lancement", Icon: MapTrifold, href: "/admin/crm/leads" },
+    { label: "Revenus XOF", value: stats ? stats.totalRevenus.toLocaleString("fr-FR") : "—", sub: "paiements réussis", Icon: CurrencyCircleDollar, href: "/admin/utilisateurs" },
+    { label: "En attente", value: stats?.paiementsEnAttente ?? "—", sub: "paiements non confirmés", Icon: TrendUp, href: "/admin/utilisateurs" },
+  ];
+
   return (
     <div className="flex flex-col gap-8">
       <div>
         <h2 className="text-[22px] font-semibold text-charbon mb-1" style={{ fontFamily: "Georgia, serif" }}>
           Vue d&apos;ensemble
         </h2>
-        <p className="text-[14px] text-pierre">Bienvenue dans votre espace agent VitrinAI.</p>
+        <p className="text-[14px] text-pierre">Bienvenue dans votre espace admin VitrinAI.</p>
       </div>
 
-      {/* Stats */}
+      {/* Stats live */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         {STATS.map(({ label, value, sub, Icon, href }) => (
           <Link
-            key={href}
+            key={href + label}
             href={href}
             className="bg-white rounded-2xl border border-bordure p-6 flex flex-col gap-4 hover:border-savane/40 hover:shadow-sm transition-all group"
           >
@@ -39,7 +46,7 @@ export default function AdminPage() {
               <ArrowRight size={16} className="text-argent group-hover:text-savane transition-colors" />
             </div>
             <div>
-              <div className="text-[28px] font-bold text-charbon leading-none">{value}</div>
+              <div className="text-[28px] font-bold text-charbon leading-none">{String(value)}</div>
               <div className="text-[13px] text-pierre mt-1">{label}</div>
               <div className="text-[11px] text-argent">{sub}</div>
             </div>

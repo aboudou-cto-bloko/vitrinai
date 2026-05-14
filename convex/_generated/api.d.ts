@@ -9,9 +9,14 @@
  */
 
 import type * as audits from "../audits.js";
+import type * as auth from "../auth.js";
 import type * as campagnes from "../campagnes.js";
+import type * as credits from "../credits.js";
+import type * as http from "../http.js";
 import type * as leads from "../leads.js";
 import type * as niches from "../niches.js";
+import type * as payments from "../payments.js";
+import type * as payments_webhooks from "../payments/webhooks.js";
 
 import type {
   ApiFromModules,
@@ -21,9 +26,14 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   audits: typeof audits;
+  auth: typeof auth;
   campagnes: typeof campagnes;
+  credits: typeof credits;
+  http: typeof http;
   leads: typeof leads;
   niches: typeof niches;
+  payments: typeof payments;
+  "payments/webhooks": typeof payments_webhooks;
 }>;
 
 /**
@@ -52,4 +62,6 @@ export declare const internal: FilterApi<
   FunctionReference<any, "internal">
 >;
 
-export declare const components: {};
+export declare const components: {
+  betterAuth: import("@convex-dev/better-auth/_generated/component.js").ComponentApi<"betterAuth">;
+};

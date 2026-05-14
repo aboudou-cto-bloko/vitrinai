@@ -44,3 +44,27 @@ export const getById = query({
     return await ctx.db.get(args.id);
   },
 });
+
+// ── Audit anonyme (1 gratuit par IP) ─────────────────────────────────────────
+
+export const hasAnonymousAudit = query({
+  args: { ip: v.string() },
+  handler: async (ctx, { ip }) => {
+    const entry = await ctx.db
+      .query("anonymousAudits")
+      .withIndex("by_ip", (q) => q.eq("ip", ip))
+      .first();
+    return entry !== null;
+  },
+});
+
+export const recordAnonymousAudit = mutation({
+  args: { ip: v.string(), auditId: v.id("audits") },
+  handler: async (ctx, { ip, auditId }) => {
+    await ctx.db.insert("anonymousAudits", {
+      ip,
+      auditId,
+      createdAt: Date.now(),
+    });
+  },
+});
