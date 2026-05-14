@@ -4,6 +4,8 @@ export interface ReportThemeConfig {
   preset: PresetId;
   companyName?: string;
   accentHex?: string;
+  headerBg?: string;
+  fontChoice?: "serif" | "sans";
 }
 
 export interface ThemeStyles {
@@ -68,15 +70,19 @@ function hexToRgba(hex: string, alpha: number): string {
 export function resolveTheme(config: ReportThemeConfig): ThemeStyles {
   if (config.preset === "brand") {
     const accent = config.accentHex ?? "#1c1c1b";
+    const header = config.headerBg ?? accent;
+    const font = config.fontChoice === "sans"
+      ? "system-ui, -apple-system, sans-serif"
+      : "Georgia, 'Times New Roman', serif";
     return {
       pageBg: "#f9f9f9",
       cardBg: "#ffffff",
-      headerBg: accent,
+      headerBg: header,
       headerFg: "#ffffff",
       accent,
       accentLight: hexToRgba(accent, 0.08),
       border: "#e5e7eb",
-      headingFont: "Georgia, serif",
+      headingFont: font,
       brandLabel: config.companyName ?? "VitrinAI",
     };
   }

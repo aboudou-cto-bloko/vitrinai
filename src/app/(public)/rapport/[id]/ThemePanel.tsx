@@ -35,6 +35,10 @@ export function ThemePanel({ auditId, currentTheme, onThemeChange }: Props) {
   const [selectedPreset, setSelectedPreset] = useState<PresetId>(currentTheme.preset);
   const [companyName, setCompanyName] = useState(currentTheme.companyName ?? "");
   const [accentHex, setAccentHex] = useState(currentTheme.accentHex ?? "#1c1c1b");
+  const [headerBg, setHeaderBg] = useState(currentTheme.headerBg ?? currentTheme.accentHex ?? "#1c1c1b");
+  const [fontChoice, setFontChoice] = useState<"serif" | "sans">(
+    (currentTheme.fontChoice as "serif" | "sans") ?? "serif"
+  );
   const [applying, setApplying] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -57,11 +61,15 @@ export function ThemePanel({ auditId, currentTheme, onThemeChange }: Props) {
         preset: selectedPreset,
         companyName: companyName || undefined,
         accentHex: selectedPreset === "brand" ? accentHex : undefined,
+        headerBg: selectedPreset === "brand" ? headerBg : undefined,
+        fontChoice: selectedPreset === "brand" ? fontChoice : undefined,
       });
       onThemeChange({
         preset: selectedPreset,
         companyName: companyName || undefined,
         accentHex: selectedPreset === "brand" ? accentHex : undefined,
+        headerBg: selectedPreset === "brand" ? headerBg : undefined,
+        fontChoice: selectedPreset === "brand" ? fontChoice : undefined,
       });
       setOpen(false);
     } catch (err: unknown) {
@@ -232,18 +240,55 @@ export function ThemePanel({ auditId, currentTheme, onThemeChange }: Props) {
                                   className="w-full h-9 px-3 rounded-lg border border-gray-200 text-[13px] text-gray-900 placeholder:text-gray-300 outline-none focus:border-gray-400 transition-colors"
                                 />
                               </div>
+                              <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                  <label className="block text-[12px] font-medium text-gray-600 mb-1">
+                                    Couleur accent
+                                  </label>
+                                  <div className="flex items-center gap-2">
+                                    <input
+                                      type="color"
+                                      value={accentHex}
+                                      onChange={(e) => setAccentHex(e.target.value)}
+                                      className="w-9 h-9 rounded-lg border border-gray-200 cursor-pointer p-0.5"
+                                    />
+                                    <span className="text-[12px] text-gray-500 font-mono">{accentHex}</span>
+                                  </div>
+                                </div>
+                                <div>
+                                  <label className="block text-[12px] font-medium text-gray-600 mb-1">
+                                    Couleur en-tête
+                                  </label>
+                                  <div className="flex items-center gap-2">
+                                    <input
+                                      type="color"
+                                      value={headerBg}
+                                      onChange={(e) => setHeaderBg(e.target.value)}
+                                      className="w-9 h-9 rounded-lg border border-gray-200 cursor-pointer p-0.5"
+                                    />
+                                    <span className="text-[12px] text-gray-500 font-mono">{headerBg}</span>
+                                  </div>
+                                </div>
+                              </div>
                               <div>
-                                <label className="block text-[12px] font-medium text-gray-600 mb-1">
-                                  Couleur principale
+                                <label className="block text-[12px] font-medium text-gray-600 mb-1.5">
+                                  Typographie
                                 </label>
-                                <div className="flex items-center gap-2">
-                                  <input
-                                    type="color"
-                                    value={accentHex}
-                                    onChange={(e) => setAccentHex(e.target.value)}
-                                    className="w-9 h-9 rounded-lg border border-gray-200 cursor-pointer p-0.5"
-                                  />
-                                  <span className="text-[13px] text-gray-500 font-mono">{accentHex}</span>
+                                <div className="grid grid-cols-2 gap-2">
+                                  {(["serif", "sans"] as const).map((f) => (
+                                    <button
+                                      key={f}
+                                      onClick={() => setFontChoice(f)}
+                                      className={`h-10 rounded-lg border text-[13px] transition-colors ${
+                                        fontChoice === f
+                                          ? "border-gray-900 bg-gray-50 font-semibold text-gray-900"
+                                          : "border-gray-200 text-gray-500 hover:border-gray-300"
+                                      }`}
+                                      style={{ fontFamily: f === "serif" ? "Georgia, serif" : "system-ui, sans-serif" }}
+                                    >
+                                      {f === "serif" ? "Classique" : "Moderne"}
+                                    </button>
+                                  ))}
                                 </div>
                               </div>
                             </motion.div>

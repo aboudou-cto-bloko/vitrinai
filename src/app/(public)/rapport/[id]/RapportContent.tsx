@@ -376,6 +376,7 @@ function DocumentHeader({
               <ExportPdfButton
                 hostname={hostname} url={url} scores={scores}
                 details={details} recommandations={recommandations}
+                theme={theme}
               />
             )}
             {isOwner && !gated && (

@@ -1,4 +1,6 @@
 import type { AuditDetails, AuditScores, Recommandation, VitalsData, AofResult } from "@/lib/audit/types";
+import { resolveTheme, DEFAULT_THEME } from "@/lib/report-themes";
+import type { ReportThemeConfig } from "@/lib/report-themes";
 
 interface PdfAuditData {
   url: string;
@@ -6,6 +8,7 @@ interface PdfAuditData {
   scores: AuditScores;
   details: AuditDetails;
   recommandations: Recommandation[];
+  theme?: ReportThemeConfig;
 }
 
 // ── Palette (minimal — used sparingly) ────────────────────────────────────────
@@ -55,9 +58,33 @@ const CW = PW - ML - MR;
 const FOOTER_H = 12;
 
 // ── Generator ─────────────────────────────────────────────────────────────────
+function hexToRgb(hex: string): RGB {
+  const h = hex.replace("#", "");
+  return [
+    parseInt(h.substring(0, 2), 16),
+    parseInt(h.substring(2, 4), 16),
+    parseInt(h.substring(4, 6), 16),
+  ];
+}
+
 export async function generateAuditPdf(data: PdfAuditData): Promise<void> {
   const { default: jsPDF } = await import("jspdf");
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+
+  const themeConfig = data.theme ?? DEFAULT_THEME;
+  const themeStyles = resolveTheme(themeConfig);
+  const accentRgb = hexToRgb(themeStyles.accent);
+  const headerBgRgb = hexToRgb(themeStyles.headerBg);
+  const headerFgRgb = hexToRgb(themeStyles.headerFg);
+  const headerSubRgb: RGB = [
+    Math.round(headerFgRgb[0] * 0.65 + headerBgRgb[0] * 0.35),
+    Math.round(headerFgRgb[1] * 0.65 + headerBgRgb[1] * 0.35),
+    Math.round(headerFgRgb[2] * 0.65 + headerBgRgb[2] * 0.35),
+  ];
+  const brandLabel = themeStyles.brandLabel;
+
+  // Override accent in the palette with the resolved theme accent
+  C.accent = accentRgb;
 
   let y = 0;
 
@@ -181,12 +208,13 @@ export async function generateAuditPdf(data: PdfAuditData): Promise<void> {
   y = 0;
 
   // Header strip
-  setFill(C.ink);
+  setFill(headerBgRgb);
   doc.rect(0, 0, PW, 18, "F");
 
   // Brand
-  t("VitrinAI", ML, 11, { size: 11, bold: true, color: C.accent });
-  t("Rapport de présence digitale", ML + 31, 11, { size: 8.5, color: C.muted });
+  const brandLabelW = brandLabel.length * 2.2 + 4;
+  t(brandLabel, ML, 11, { size: 11, bold: true, color: headerFgRgb });
+  t("Rapport de présence digitale", ML + brandLabelW, 11, { size: 8.5, color: headerSubRgb });
 
   const dateStr = new Date().toLocaleDateString("fr-FR", {
     day: "numeric", month: "long", year: "numeric",
@@ -199,7 +227,12 @@ export async function generateAuditPdf(data: PdfAuditData): Promise<void> {
   t(hostname, ML, y, { size: 26, bold: true, color: C.ink });
   y += 7;
   t(data.url, ML, y, { size: 9, color: C.muted });
-  y += 12;
+  y += 7;
+  if (themeConfig.preset === "brand" && themeConfig.companyName) {
+    t(`Préparé par ${themeConfig.companyName}`, ML, y, { size: 9, bold: true, color: accentRgb });
+    y += 6;
+  }
+  y += 5;
   rule(ML, y, CW, C.hairline, 0.3);
   y += 10;
 

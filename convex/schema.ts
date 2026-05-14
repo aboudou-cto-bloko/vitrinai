@@ -78,6 +78,8 @@ export default defineSchema({
       preset: v.string(),
       companyName: v.optional(v.string()),
       accentHex: v.optional(v.string()),
+      headerBg: v.optional(v.string()),
+      fontChoice: v.optional(v.string()),
     })),
     createdAt: v.number(),
   })

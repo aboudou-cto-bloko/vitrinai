@@ -4,6 +4,7 @@ import { useState } from "react";
 import { FilePdf } from "@phosphor-icons/react";
 import { generateAuditPdf } from "@/lib/rapport/pdf-generator";
 import type { AuditDetails, AuditScores, Recommandation } from "@/lib/audit/types";
+import type { ReportThemeConfig } from "@/lib/report-themes";
 
 interface Props {
   hostname: string;
@@ -11,15 +12,16 @@ interface Props {
   scores: AuditScores;
   details: AuditDetails;
   recommandations: Recommandation[];
+  theme?: ReportThemeConfig;
 }
 
-export function ExportPdfButton({ hostname, url, scores, details, recommandations }: Props) {
+export function ExportPdfButton({ hostname, url, scores, details, recommandations, theme }: Props) {
   const [loading, setLoading] = useState(false);
 
   async function handleExport() {
     setLoading(true);
     try {
-      await generateAuditPdf({ url, hostname, scores, details, recommandations });
+      await generateAuditPdf({ url, hostname, scores, details, recommandations, theme });
     } finally {
       setLoading(false);
     }

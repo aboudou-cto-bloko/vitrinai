@@ -108,8 +108,10 @@ export const applyTheme = mutation({
     preset: v.string(),
     companyName: v.optional(v.string()),
     accentHex: v.optional(v.string()),
+    headerBg: v.optional(v.string()),
+    fontChoice: v.optional(v.string()),
   },
-  handler: async (ctx, { auditId, preset, companyName, accentHex }) => {
+  handler: async (ctx, { auditId, preset, companyName, accentHex, headerBg, fontChoice }) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Non authentifié");
 
@@ -145,7 +147,7 @@ export const applyTheme = mutation({
     }
 
     await ctx.db.patch(auditId, {
-      theme: { preset, companyName, accentHex },
+      theme: { preset, companyName, accentHex, headerBg, fontChoice },
     });
 
     return { success: true };
