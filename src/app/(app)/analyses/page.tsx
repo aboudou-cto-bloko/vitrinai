@@ -4,6 +4,7 @@ import { useQuery } from "convex/react";
 import { api } from "@/../convex/_generated/api";
 import { useSession } from "@/lib/auth-client";
 import Link from "next/link";
+import { motion } from "motion/react";
 
 const GRADE_COLORS: Record<string, string> = {
   A: "bg-emerald-50 text-emerald-700 border-emerald-200",
@@ -58,12 +59,20 @@ export default function AnalysesPage() {
 
         {audits === undefined && (
           <div className="bg-white rounded-2xl border border-bordure divide-y divide-bordure overflow-hidden">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="px-5 py-4 flex items-center gap-4 animate-pulse">
-                <div className="w-10 h-10 rounded-xl bg-parchemin" />
+            {[0, 1, 2, 3, 4].map((i) => (
+              <div
+                key={i}
+                className="px-5 py-4 flex items-center gap-4 animate-pulse"
+                style={{ animationDelay: `${i * 60}ms` }}
+              >
+                <div className="w-10 h-10 rounded-xl bg-sable shrink-0" />
                 <div className="flex-1 space-y-2">
-                  <div className="h-3 bg-parchemin rounded w-48" />
-                  <div className="h-3 bg-parchemin rounded w-24" />
+                  <div className="h-3.5 bg-sable rounded w-52" />
+                  <div className="h-2.5 bg-sable rounded w-28" />
+                </div>
+                <div className="space-y-1.5 text-right shrink-0">
+                  <div className="h-4 bg-sable rounded w-14" />
+                  <div className="h-2.5 bg-sable rounded w-16" />
                 </div>
               </div>
             ))}
@@ -121,40 +130,46 @@ export default function AnalysesPage() {
               </h2>
             )}
             <div className="bg-white rounded-2xl border border-bordure divide-y divide-bordure overflow-hidden">
-              {done.map((audit) => {
+              {done.map((audit, idx) => {
                 const grade = audit.scores?.grade ?? null;
                 const score = audit.scores?.global ?? null;
                 const gradeClass = grade ? (GRADE_COLORS[grade] ?? GRADE_COLORS["F"]) : "";
 
                 return (
-                  <Link
+                  <motion.div
                     key={audit._id}
-                    href={`/rapport/${audit._id}`}
-                    className="px-5 py-4 flex items-center gap-4 hover:bg-parchemin/50 transition-colors"
+                    initial={{ opacity: 0, x: -8 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.3, delay: idx * 0.05, ease: [0.16, 1, 0.3, 1] }}
                   >
-                    {/* Score badge */}
-                    <div className={`w-10 h-10 rounded-xl border flex items-center justify-center shrink-0 ${gradeClass}`}>
-                      <span className="text-[15px] font-bold">{grade ?? "—"}</span>
-                    </div>
+                    <Link
+                      href={`/rapport/${audit._id}`}
+                      className="px-5 py-4 flex items-center gap-4 hover:bg-parchemin/50 transition-colors"
+                    >
+                      {/* Score badge */}
+                      <div className={`w-10 h-10 rounded-xl border flex items-center justify-center shrink-0 ${gradeClass}`}>
+                        <span className="text-[15px] font-bold">{grade ?? "—"}</span>
+                      </div>
 
-                    {/* URL + date */}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[14px] font-medium text-charbon truncate">{audit.url}</p>
-                      <p className="text-[12px] text-pierre">
-                        {new Date(audit.createdAt).toLocaleDateString("fr-FR", {
-                          day: "numeric", month: "long", year: "numeric",
-                        })}
-                      </p>
-                    </div>
+                      {/* URL + date */}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[14px] font-medium text-charbon truncate">{audit.url}</p>
+                        <p className="text-[12px] text-pierre">
+                          {new Date(audit.createdAt).toLocaleDateString("fr-FR", {
+                            day: "numeric", month: "long", year: "numeric",
+                          })}
+                        </p>
+                      </div>
 
-                    {/* Score */}
-                    <div className="text-right shrink-0">
-                      <p className="text-[15px] font-semibold text-charbon">
-                        {score !== null ? `${score}/100` : "—"}
-                      </p>
-                      <p className="text-[11px] text-pierre">score global</p>
-                    </div>
-                  </Link>
+                      {/* Score */}
+                      <div className="text-right shrink-0">
+                        <p className="text-[15px] font-semibold text-charbon">
+                          {score !== null ? `${score}/100` : "—"}
+                        </p>
+                        <p className="text-[11px] text-pierre">score global</p>
+                      </div>
+                    </Link>
+                  </motion.div>
                 );
               })}
             </div>

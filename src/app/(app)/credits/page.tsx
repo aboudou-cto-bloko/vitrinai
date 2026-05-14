@@ -8,8 +8,46 @@ import { CREDIT_PACKS, type PackId } from "@/lib/credit-packs";
 import { useSession } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { motion } from "motion/react";
 
 const PACK_LIST = Object.values(CREDIT_PACKS);
+
+function CreditsSkeleton() {
+  return (
+    <div className="min-h-screen bg-parchemin">
+      <div className="max-w-[900px] mx-auto px-6 py-12">
+        <div className="bg-white rounded-2xl border border-bordure p-6 mb-8 animate-pulse flex items-center justify-between">
+          <div className="space-y-2">
+            <div className="h-3 bg-sable rounded w-20" />
+            <div className="h-10 bg-sable rounded w-36" />
+          </div>
+          <div className="h-10 w-28 bg-sable rounded-lg" />
+        </div>
+        <div className="h-5 bg-sable rounded w-40 mb-4 animate-pulse" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[0, 1, 2, 3].map((i) => (
+            <div
+              key={i}
+              className="bg-white rounded-2xl border border-bordure p-5 space-y-4 animate-pulse"
+              style={{ animationDelay: `${i * 80}ms` }}
+            >
+              <div className="h-5 mb-3 bg-sable rounded w-16" />
+              <div className="space-y-1.5">
+                <div className="h-4 bg-sable rounded w-24" />
+                <div className="h-3 bg-sable rounded w-32" />
+              </div>
+              <div className="space-y-1">
+                <div className="h-8 bg-sable rounded w-20" />
+                <div className="h-3 bg-sable rounded w-36" />
+              </div>
+              <div className="h-9 bg-sable rounded-lg w-full" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function CreditsPage() {
   const { data: session } = useSession();
@@ -18,7 +56,11 @@ export default function CreditsPage() {
   const history = useQuery(api.credits.getHistory, me ? { userId: me._id } : "skip");
   const [loading, setLoading] = useState<PackId | null>(null);
 
+  // Session en cours de chargement ou page crédits sans auth
   if (!session) {
+    // Pendant le chargement initial, on montre le skeleton pour éviter le flash
+    const isLoading = session === undefined;
+    if (isLoading) return <CreditsSkeleton />;
     return (
       <div className="min-h-screen bg-parchemin flex items-center justify-center">
         <div className="text-center">
@@ -28,6 +70,8 @@ export default function CreditsPage() {
       </div>
     );
   }
+
+  if (me === undefined) return <CreditsSkeleton />;
 
   async function handleBuy(packId: PackId) {
     setLoading(packId);
@@ -56,13 +100,23 @@ export default function CreditsPage() {
       <div className="max-w-[900px] mx-auto px-6 py-12">
 
         {/* Solde */}
-        <div className="bg-white rounded-2xl border border-bordure p-6 mb-8 flex items-center justify-between">
+        <motion.div
+          className="bg-white rounded-2xl border border-bordure p-6 mb-8 flex items-center justify-between"
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+        >
           <div>
             <p className="text-[13px] text-olive mb-1">Votre solde</p>
-            <p className="font-serif text-[40px] font-medium text-noir leading-none">
+            <motion.p
+              className="font-serif text-[40px] font-medium text-noir leading-none"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.15 }}
+            >
               {me?.creditsBalance ?? "—"}
               <span className="text-[18px] text-olive ml-2">crédits</span>
-            </p>
+            </motion.p>
           </div>
           <Link
             href="/"
@@ -70,15 +124,19 @@ export default function CreditsPage() {
           >
             Lancer un audit
           </Link>
-        </div>
+        </motion.div>
 
         {/* Packs */}
         <h2 className="font-serif text-[22px] font-medium text-noir mb-4">Acheter des crédits</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
-          {PACK_LIST.map((pack) => (
-            <div
+          {PACK_LIST.map((pack, index) => (
+            <motion.div
               key={pack.id}
-              className={`bg-white rounded-2xl border p-5 flex flex-col gap-3 transition-shadow hover:shadow-md ${
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.1 + index * 0.07, ease: [0.16, 1, 0.3, 1] }}
+              whileHover={{ y: -4, boxShadow: "rgba(0,0,0,0.08) 0px 10px 28px", transition: { duration: 0.2 } }}
+              className={`bg-white rounded-2xl border p-5 flex flex-col gap-3 ${
                 pack.highlight ? "border-savane ring-1 ring-savane/20" : "border-bordure"
               }`}
             >
@@ -102,9 +160,11 @@ export default function CreditsPage() {
                   {Math.round(pack.price / pack.credits).toLocaleString("fr-FR")} XOF/crédit
                 </p>
               </div>
-              <button
+              <motion.button
                 onClick={() => handleBuy(pack.id as PackId)}
                 disabled={loading === pack.id}
+                whileTap={{ scale: 0.97 }}
+                transition={{ duration: 0.1 }}
                 className={`w-full h-9 rounded-lg text-[13px] font-medium transition-colors ${
                   pack.highlight
                     ? "bg-savane text-white hover:bg-savane/90"
@@ -112,8 +172,8 @@ export default function CreditsPage() {
                 } disabled:opacity-50`}
               >
                 {loading === pack.id ? "Redirection…" : "Acheter"}
-              </button>
-            </div>
+              </motion.button>
+            </motion.div>
           ))}
         </div>
 
