@@ -45,6 +45,30 @@ export const getById = query({
   },
 });
 
+// ── Historique des audits de l'utilisateur connecté ──────────────────────────
+
+export const getMyAudits = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return [];
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_better_auth_user_id", (q) =>
+        q.eq("better_auth_user_id", identity.subject)
+      )
+      .unique();
+    if (!user) return [];
+
+    return ctx.db
+      .query("audits")
+      .withIndex("by_userId", (q) => q.eq("userId", user._id))
+      .order("desc")
+      .take(50);
+  },
+});
+
 // ── Audit anonyme (1 gratuit par IP) ─────────────────────────────────────────
 
 export const hasAnonymousAudit = query({

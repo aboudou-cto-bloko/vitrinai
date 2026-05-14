@@ -87,6 +87,9 @@ export default function SignUpPage() {
               className="w-full h-10 px-3 rounded-lg border border-bordure text-[14px] text-charbon bg-white focus:outline-none focus:ring-2 focus:ring-savane/30 focus:border-savane transition-colors"
               placeholder="8 caractères minimum"
             />
+            <p className="text-[12px] text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mt-2 leading-relaxed">
+              ⚠️ Il n&apos;y a pas de réinitialisation de mot de passe pour l&apos;instant. Conservez précieusement ce mot de passe.
+            </p>
           </div>
 
           <button
