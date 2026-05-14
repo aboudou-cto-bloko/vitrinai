@@ -4,7 +4,7 @@ import { useQuery } from "convex/react";
 import { api } from "@/../convex/_generated/api";
 import { useState } from "react";
 import { toast } from "sonner";
-import { CREDIT_PACKS, type PackId } from "@/lib/moneroo";
+import { CREDIT_PACKS, type PackId } from "@/lib/credit-packs";
 import { useSession } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";

@@ -2,7 +2,7 @@
 
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { CREDIT_PACKS, type PackId } from "@/lib/moneroo";
+import { CREDIT_PACKS, type PackId } from "@/lib/credit-packs";
 import { Suspense } from "react";
 
 function ConfirmationContent() {
