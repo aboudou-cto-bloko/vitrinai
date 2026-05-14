@@ -1,6 +1,5 @@
 import type { AuditDetails, AuditScores, Recommandation, VitalsData, AofResult } from "@/lib/audit/types";
 
-// ── Types ─────────────────────────────────────────────────────────────────────
 interface PdfAuditData {
   url: string;
   hostname: string;
@@ -9,634 +8,602 @@ interface PdfAuditData {
   recommandations: Recommandation[];
 }
 
-// ── Palette ───────────────────────────────────────────────────────────────────
-const C = {
-  noir:     [22, 20, 16],
-  charbon:  [58, 56, 48],
-  pierre:   [103, 101, 92],
-  argent:   [135, 134, 127],
-  sable:    [232, 230, 220],
-  parchemin:[245, 243, 236],
-  white:    [255, 255, 255],
-  savane:   [196, 122, 58],
-  success:  [45, 122, 79],
-  warning:  [245, 158, 11],
-  error:    [181, 51, 51],
-};
-
+// ── Palette (minimal — used sparingly) ────────────────────────────────────────
 type RGB = [number, number, number];
 
-// ── Score helpers ─────────────────────────────────────────────────────────────
+const C = {
+  ink:      [18, 18, 18]   as RGB,
+  body:     [48, 48, 48]   as RGB,
+  muted:    [110, 110, 110] as RGB,
+  rule:     [210, 210, 210] as RGB,
+  hairline: [230, 230, 230] as RGB,
+  white:    [255, 255, 255] as RGB,
+  accent:   [196, 122, 58]  as RGB,
+  success:  [34, 110, 66]   as RGB,
+  warning:  [180, 110, 10]  as RGB,
+  error:    [170, 40, 40]   as RGB,
+};
+
 function gradeColor(grade: string): RGB {
   switch (grade) {
-    case "A": return C.success as RGB;
-    case "B": return [94, 158, 115];
-    case "C": return C.warning as RGB;
-    case "D": return [224, 123, 57];
-    default:  return C.error as RGB;
+    case "A": return C.success;
+    case "B": return [60, 130, 90] as RGB;
+    case "C": return C.warning;
+    case "D": return [190, 100, 30] as RGB;
+    default:  return C.error;
   }
 }
 
+function metricColor(status: "good" | "needs-improvement" | "poor"): RGB {
+  if (status === "good") return C.success;
+  if (status === "needs-improvement") return C.warning;
+  return C.error;
+}
+
 function scoreColor(pct: number): RGB {
-  if (pct >= 70) return C.success as RGB;
-  if (pct >= 40) return C.warning as RGB;
-  return C.error as RGB;
+  if (pct >= 70) return C.success;
+  if (pct >= 40) return C.warning;
+  return C.error;
 }
 
-function scoreLabel(pct: number): string {
-  if (pct >= 80) return "Excellent";
-  if (pct >= 60) return "Bien";
-  if (pct >= 40) return "À améliorer";
-  return "Problème";
-}
+// ── Layout ────────────────────────────────────────────────────────────────────
+const PW = 210;
+const PH = 297;
+const ML = 22;
+const MR = 22;
+const CW = PW - ML - MR;
+const FOOTER_H = 12;
 
-// ── Layout constants ──────────────────────────────────────────────────────────
-const PW = 210;   // page width mm
-const PH = 297;   // page height mm
-const ML = 18;    // margin left
-const MR = 18;    // margin right
-const CW = PW - ML - MR;  // content width
-
-// ── Main generator ────────────────────────────────────────────────────────────
+// ── Generator ─────────────────────────────────────────────────────────────────
 export async function generateAuditPdf(data: PdfAuditData): Promise<void> {
   const { default: jsPDF } = await import("jspdf");
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
 
   let y = 0;
 
-  // ── Helper methods ─────────────────────────────────────────────────────────
-  const setColor = (rgb: RGB) => doc.setTextColor(rgb[0], rgb[1], rgb[2]);
-  const setFill = (rgb: RGB) => doc.setFillColor(rgb[0], rgb[1], rgb[2]);
-  const setDraw = (rgb: RGB) => doc.setDrawColor(rgb[0], rgb[1], rgb[2]);
+  // ── Primitives ────────────────────────────────────────────────────────────
+  function setFill(c: RGB)  { doc.setFillColor(c[0], c[1], c[2]); }
+  function setDraw(c: RGB)  { doc.setDrawColor(c[0], c[1], c[2]); }
+  function setColor(c: RGB) { doc.setTextColor(c[0], c[1], c[2]); }
 
-  function checkPageBreak(neededMm: number) {
-    if (y + neededMm > PH - 15) {
-      doc.addPage();
-      y = 18;
-    }
-  }
-
-  function drawRect(x: number, ry: number, w: number, h: number, fill: RGB, draw?: RGB) {
-    setFill(fill);
-    if (draw) { setDraw(draw); doc.roundedRect(x, ry, w, h, 2, 2, "FD"); }
-    else { doc.roundedRect(x, ry, w, h, 2, 2, "F"); }
-  }
-
-  function text(
+  function t(
     str: string,
     x: number,
     ty: number,
-    opts: { size?: number; bold?: boolean; color?: RGB; align?: "left" | "center" | "right"; maxWidth?: number } = {}
+    {
+      size = 9.5,
+      bold = false,
+      color = C.body,
+      align = "left" as "left" | "center" | "right",
+      maxW,
+    }: { size?: number; bold?: boolean; color?: RGB; align?: "left" | "center" | "right"; maxW?: number } = {}
   ) {
-    const { size = 10, bold = false, color = C.charbon as RGB, align = "left", maxWidth } = opts;
     doc.setFontSize(size);
     doc.setFont("helvetica", bold ? "bold" : "normal");
     setColor(color);
-    if (maxWidth) {
-      const lines = doc.splitTextToSize(str, maxWidth);
+    if (maxW) {
+      const lines = doc.splitTextToSize(str, maxW);
       doc.text(lines, x, ty, { align });
     } else {
       doc.text(str, x, ty, { align });
     }
   }
 
-  function textHeight(str: string, fontSize: number, maxWidth: number): number {
-    doc.setFontSize(fontSize);
-    const lines = doc.splitTextToSize(str, maxWidth);
-    return lines.length * (fontSize * 0.35) + (lines.length - 1) * 1;
+  function lineHeight(str: string, size: number, maxW: number): number {
+    doc.setFontSize(size);
+    const lines = doc.splitTextToSize(str, maxW);
+    return lines.length * size * 0.353 + (lines.length - 1) * 1.2;
   }
 
-  function sectionTitle(title: string) {
-    checkPageBreak(12);
-    // Ligne colorée à gauche
-    setFill(C.savane as RGB);
-    doc.rect(ML, y, 3, 6, "F");
-    text(title, ML + 6, y + 4.5, { size: 13, bold: true, color: C.charbon as RGB });
-    y += 10;
-    // Séparateur
-    setDraw(C.sable as RGB);
-    doc.setLineWidth(0.3);
-    doc.line(ML, y, PW - MR, y);
+  function rule(rx: number, ry: number, rw: number, color = C.hairline, lw = 0.2) {
+    doc.setLineWidth(lw);
+    setDraw(color);
+    doc.line(rx, ry, rx + rw, ry);
+  }
+
+  function thickRule(rx: number, ry: number, rw: number) {
+    setFill(C.accent);
+    doc.rect(rx, ry, rw, 0.6, "F");
+  }
+
+  function pageBreakCheck(needed: number) {
+    if (y + needed > PH - FOOTER_H - 6) {
+      doc.addPage();
+      y = 20;
+    }
+  }
+
+  // ── Section heading ────────────────────────────────────────────────────────
+  function section(title: string, sub?: string) {
+    pageBreakCheck(14);
+    t(title.toUpperCase(), ML, y, { size: 9, bold: true, color: C.muted });
+    y += 3;
+    rule(ML, y, CW, C.rule, 0.4);
     y += 5;
+    if (sub) {
+      t(sub, ML, y, { size: 9, color: C.muted, maxW: CW });
+      y += lineHeight(sub, 9, CW) + 4;
+    }
   }
 
-  function scoreBar(x: number, barY: number, w: number, pct: number, color: RGB) {
-    drawRect(x, barY, w, 3.5, C.sable as RGB);
-    drawRect(x, barY, Math.max(4, w * pct / 100), 3.5, color);
+  // ── Metric row ─────────────────────────────────────────────────────────────
+  // label left, value right, thin bottom rule
+  function metricRow(
+    label: string,
+    value: string,
+    valueColor: RGB = C.body,
+    sublabel?: string,
+    barPct?: number,
+    barColor?: RGB,
+  ) {
+    pageBreakCheck(12);
+    t(label, ML, y, { size: 9.5, color: C.body });
+    t(value, PW - MR, y, { size: 9.5, bold: true, color: valueColor, align: "right" });
+    if (sublabel) {
+      y += 4;
+      t(sublabel, ML, y, { size: 8, color: C.muted, maxW: CW * 0.8 });
+    }
+    if (barPct !== undefined && barColor) {
+      y += 4;
+      // track
+      setFill(C.hairline);
+      doc.rect(ML, y, CW, 1.5, "F");
+      // fill
+      setFill(barColor);
+      doc.rect(ML, y, Math.max(2, CW * barPct / 100), 1.5, "F");
+      y += 3;
+    }
+    y += 4;
+    rule(ML, y, CW);
+    y += 4;
   }
 
-  function footer() {
+  // ── Footers (rendered last) ───────────────────────────────────────────────
+  function renderFooters() {
     const pages = doc.getNumberOfPages();
+    const dateStr = new Date().toLocaleDateString("fr-FR", {
+      day: "numeric", month: "long", year: "numeric",
+    });
     for (let i = 1; i <= pages; i++) {
       doc.setPage(i);
-      setFill(C.noir as RGB);
-      doc.rect(0, PH - 10, PW, 10, "F");
-      text("VitrinAI — Rapport de présence digitale", ML, PH - 4, { size: 7.5, color: C.argent as RGB });
-      text(`Page ${i} / ${pages}`, PW - MR, PH - 4, { size: 7.5, color: C.argent as RGB, align: "right" });
-      text(data.url, PW / 2, PH - 4, { size: 7, color: C.pierre as RGB, align: "center" });
+      rule(ML, PH - FOOTER_H, CW, C.rule, 0.3);
+      t("VitrinAI", ML, PH - FOOTER_H + 5, { size: 7.5, bold: true, color: C.accent });
+      t(data.url, ML + 18, PH - FOOTER_H + 5, { size: 7.5, color: C.muted });
+      t(`${dateStr}  ·  Page ${i} / ${pages}`, PW - MR, PH - FOOTER_H + 5, {
+        size: 7.5, color: C.muted, align: "right",
+      });
     }
   }
 
   // ════════════════════════════════════════════════════════════════════════════
-  // PAGE 1 — COUVERTURE
+  // PAGE 1 — COVER
   // ════════════════════════════════════════════════════════════════════════════
-  setFill(C.noir as RGB);
-  doc.rect(0, 0, PW, PH, "F");
+  y = 0;
 
-  // Accent band
-  setFill(C.savane as RGB);
-  doc.rect(0, 0, 4, PH, "F");
+  // Header strip
+  setFill(C.ink);
+  doc.rect(0, 0, PW, 18, "F");
 
-  // VitrinAI
-  text("VitrinAI", ML + 6, 22, { size: 18, bold: true, color: C.white as RGB });
-  text("Rapport de présence digitale", ML + 6, 30, { size: 10, color: C.argent as RGB });
+  // Brand
+  t("VitrinAI", ML, 11, { size: 11, bold: true, color: C.accent });
+  t("Rapport de présence digitale", ML + 31, 11, { size: 8.5, color: C.muted });
 
-  // Divider
-  setDraw(C.charbon as RGB);
-  doc.setLineWidth(0.3);
-  doc.line(ML + 6, 35, PW - MR, 35);
+  const dateStr = new Date().toLocaleDateString("fr-FR", {
+    day: "numeric", month: "long", year: "numeric",
+  });
+  t(dateStr, PW - MR, 11, { size: 8.5, color: C.muted, align: "right" });
 
-  // Site URL
-  text(data.hostname, PW / 2, 60, { size: 22, bold: true, color: C.white as RGB, align: "center" });
-  text(data.url, PW / 2, 68, { size: 9, color: C.argent as RGB, align: "center" });
+  // Site name
+  y = 46;
+  const hostname = data.hostname;
+  t(hostname, ML, y, { size: 26, bold: true, color: C.ink });
+  y += 7;
+  t(data.url, ML, y, { size: 9, color: C.muted });
+  y += 12;
+  rule(ML, y, CW, C.hairline, 0.3);
+  y += 10;
 
-  // Grade circle (drawn manually)
-  const gColor = gradeColor(data.scores.grade);
-  doc.setLineWidth(3);
-  setDraw(gColor);
-  doc.setFillColor(22, 20, 16);
-  doc.circle(PW / 2, 105, 18, "FD");
-  text(data.scores.grade, PW / 2, 109, { size: 26, bold: true, color: gColor, align: "center" });
-  text(`${data.scores.global}/100`, PW / 2, 117, { size: 9, color: C.argent as RGB, align: "center" });
+  // Grade + global score — large, clean
+  const gc = gradeColor(data.scores.grade);
+  const gradeLabel: Record<string, string> = { A: "Excellent", B: "Bon", C: "À améliorer", D: "Insuffisant", F: "Critique" };
 
-  // Score label
-  const gLabel = data.scores.global >= 70 ? "Bonne présence digitale" : data.scores.global >= 45 ? "Présence à renforcer" : "Présence insuffisante";
-  text(gLabel, PW / 2, 127, { size: 10, color: gColor, align: "center" });
+  t(data.scores.grade, ML, y + 20, { size: 52, bold: true, color: gc });
+  t(`${data.scores.global}`, ML + 28, y + 14, { size: 22, bold: true, color: gc });
+  t("/ 100", ML + 28, y + 20, { size: 11, color: C.muted });
+  t(gradeLabel[data.scores.grade] ?? data.scores.grade, ML + 28, y + 27, {
+    size: 10, bold: true, color: gc,
+  });
 
-  // 4 axis pills
+  y += 36;
+  rule(ML, y, CW, C.hairline, 0.3);
+  y += 10;
+
+  // 4 axes — simple 2×2 grid with lines
   const axes = [
-    { key: "technique", label: "Technique", max: 30 },
-    { key: "seo", label: "SEO", max: 30 },
-    { key: "presence", label: "Présence", max: 25 },
-    { key: "ux", label: "Expérience", max: 15 },
-  ] as const;
-  const pillW = 38;
-  const pillGap = 4;
-  const pillsStart = (PW - (pillW * 4 + pillGap * 3)) / 2;
+    { key: "technique" as const, label: "Technique & Sécurité", max: 30 },
+    { key: "seo"       as const, label: "Référencement (SEO)",   max: 30 },
+    { key: "presence"  as const, label: "Présence en ligne",     max: 25 },
+    { key: "ux"        as const, label: "Expérience visiteur",   max: 15 },
+  ];
 
+  const colW = CW / 2 - 4;
   axes.forEach(({ key, label, max }, i) => {
     const score = data.scores[key];
     const pct = Math.round((score / max) * 100);
     const col = scoreColor(pct);
-    const px = pillsStart + i * (pillW + pillGap);
-    drawRect(px, 138, pillW, 18, [30, 28, 24] as RGB);
-    text(label, px + pillW / 2, 144.5, { size: 7, color: C.argent as RGB, align: "center" });
-    text(`${score}/${max}`, px + pillW / 2, 150, { size: 9, bold: true, color: col, align: "center" });
+    const ax = i % 2 === 0 ? ML : ML + colW + 8;
+    const ay = y + Math.floor(i / 2) * 22;
+
+    t(label, ax, ay, { size: 8.5, color: C.muted });
+    t(`${score}/${max}`, ax + colW, ay, { size: 9.5, bold: true, color: col, align: "right" });
+
+    // thin bar
+    setFill(C.hairline);
+    doc.rect(ax, ay + 3, colW, 1.5, "F");
+    setFill(col);
+    doc.rect(ax, ay + 3, Math.max(2, colW * pct / 100), 1.5, "F");
+
+    rule(ax, ay + 8, colW, C.hairline);
   });
+  y += 54;
 
-  // Date
-  const dateStr = new Date().toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
-  text(`Généré le ${dateStr}`, PW / 2, 200, { size: 8, color: C.pierre as RGB, align: "center" });
+  // Reference + disclaimer
+  const ref = `REF-${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}-${data.hostname.replace(/\./g, "").toUpperCase().slice(0, 8)}`;
+  t(`Référence : ${ref}`, ML, y, { size: 8, color: C.muted });
+  y += 10;
 
-  // Confidence note
-  setFill([30, 28, 24] as RGB);
-  doc.roundedRect(ML, 210, CW, 24, 2, 2, "F");
-  text("À propos de ce rapport", ML + 8, 218, { size: 8, bold: true, color: C.savane as RGB });
-  text(
-    "Ce rapport analyse automatiquement la présence digitale de votre site. Il est basé sur des outils reconnus (Google Lighthouse, PageSpeed Insights) et une analyse de votre page d'accueil. Il ne remplace pas un audit réalisé par un professionnel mais donne une photographie fiable de votre situation actuelle.",
-    ML + 8,
-    224,
-    { size: 7.5, color: C.argent as RGB, maxWidth: CW - 16 }
-  );
+  const disclaimer = "Ce rapport est généré automatiquement à partir d'une analyse technique de votre page d'accueil (Google Lighthouse, PageSpeed Insights, vérifications HTTP). Il constitue une photographie de votre présence digitale à la date d'émission et ne se substitue pas à un audit réalisé par un professionnel.";
+  rule(ML, y, CW, C.hairline, 0.2);
+  y += 6;
+  t(disclaimer, ML, y, { size: 7.5, color: C.muted, maxW: CW });
 
   // ════════════════════════════════════════════════════════════════════════════
-  // PAGE 2 — RÉSUMÉ & SCORES
+  // PAGE 2 — RÉSUMÉ & AXES
   // ════════════════════════════════════════════════════════════════════════════
   doc.addPage();
-  y = 18;
+  y = 20;
 
-  sectionTitle("Résumé de votre situation");
+  section("Résumé exécutif");
 
-  // Résumé phrase
-  const summaryText = buildSummary(data.scores, data.details);
-  const sh = textHeight(summaryText, 10, CW);
-  checkPageBreak(sh + 10);
-  drawRect(ML, y, CW, sh + 8, C.parchemin as RGB);
-  text(summaryText, ML + 6, y + 6, { size: 10, color: C.charbon as RGB, maxWidth: CW - 12 });
-  y += sh + 14;
+  const summary = buildSummary(data.scores, data.details);
+  t(summary, ML, y, { size: 9.5, color: C.body, maxW: CW });
+  y += lineHeight(summary, 9.5, CW) + 10;
 
-  // Axes
-  sectionTitle("Vos 4 axes de performance");
+  section("Performance par axe");
 
   const axeDetails = [
-    { key: "technique" as const, label: "Technique & Sécurité", max: 30, desc: "SSL, vitesse, compatibilité mobile, bonnes pratiques techniques." },
-    { key: "seo" as const, label: "Référencement (SEO)", max: 30, desc: "Titre, description, structure, sitemap — ce qui détermine si Google vous trouve." },
-    { key: "presence" as const, label: "Présence en ligne", max: 25, desc: "Réseaux sociaux, Google Maps, téléphone, email — votre visibilité locale." },
-    { key: "ux" as const, label: "Expérience visiteur", max: 15, desc: "Accessibilité, contact facile, stabilité visuelle — ce que ressent votre visiteur." },
+    { key: "technique" as const, label: "Technique & Sécurité", max: 30,
+      desc: "SSL, vitesse de chargement, compatibilité mobile, en-têtes de sécurité." },
+    { key: "seo" as const, label: "Référencement (SEO)", max: 30,
+      desc: "Titre, méta-description, structure HTML, sitemap, robots." },
+    { key: "presence" as const, label: "Présence en ligne", max: 25,
+      desc: "Réseaux sociaux, Google Maps, coordonnées, visibilité locale." },
+    { key: "ux" as const, label: "Expérience visiteur", max: 15,
+      desc: "Accessibilité, contact visible, stabilité de la mise en page." },
   ];
 
   axeDetails.forEach(({ key, label, max, desc }) => {
-    checkPageBreak(28);
     const score = data.scores[key];
     const pct = Math.round((score / max) * 100);
     const col = scoreColor(pct);
-    const sl = scoreLabel(pct);
-
-    drawRect(ML, y, CW, 24, C.white as RGB, C.sable as RGB);
-
-    // Label + score
-    text(label, ML + 5, y + 7, { size: 10, bold: true, color: C.charbon as RGB });
-    text(`${score}/${max}`, PW - MR - 5, y + 7, { size: 10, bold: true, color: col, align: "right" });
-
-    // Status badge
-    drawRect(ML + 5, y + 9.5, 22, 5, col);
-    text(sl, ML + 16, y + 13.5, { size: 7, bold: true, color: C.white as RGB, align: "center" });
-
-    // Bar
-    scoreBar(ML + 32, y + 11, CW - 40, pct, col);
-
-    // Desc
-    text(desc, ML + 5, y + 20, { size: 8, color: C.pierre as RGB });
-    y += 28;
+    const status = pct >= 70 ? "Bon" : pct >= 40 ? "À améliorer" : "Insuffisant";
+    metricRow(`${label}  —  ${desc}`, `${score} / ${max}  ·  ${status}`, col, undefined, pct, col);
   });
 
   // ════════════════════════════════════════════════════════════════════════════
-  // PAGE 3 — WEB VITALS (si présents)
+  // PAGE 3 — WEB VITALS
   // ════════════════════════════════════════════════════════════════════════════
   const vitals = data.details.vitals;
   if (vitals) {
     doc.addPage();
-    y = 18;
-    sectionTitle("Vitesse et expérience utilisateur");
+    y = 20;
 
-    text(
-      "Ces mesures reflètent ce que vivent vos visiteurs quand ils ouvrent votre site. Elles sont calculées par Google Lighthouse sur mobile.",
-      ML, y, { size: 9, color: C.pierre as RGB, maxWidth: CW }
+    section(
+      "Vitesse et expérience utilisateur",
+      "Mesures Google Lighthouse sur mobile. Ces chiffres reflètent ce que vit un visiteur réel.",
     );
-    y += 10;
 
-    renderVitals(doc, vitals, ML, y, CW);
-    y += estimateVitalsHeight(vitals);
+    renderVitalsSection(vitals);
 
-    // Page weight block
     if (vitals.totalByteWeightKb !== null || vitals.requestCount !== null) {
-      checkPageBreak(30);
+      pageBreakCheck(24);
       y += 4;
-      sectionTitle("Poids de la page");
-      renderWeightBlock(doc, vitals, ML, y, CW, text, drawRect, scoreBar, scoreColor);
-      y += 36;
+      section("Poids de la page");
+
+      if (vitals.totalByteWeightKb !== null) {
+        const kb = vitals.totalByteWeightKb;
+        const pct = Math.min(100, Math.round((kb / 3000) * 100));
+        const col = scoreColor(100 - pct);
+        const label = kb >= 1024 ? `${(kb / 1024).toFixed(1)} Mo` : `${kb} Ko`;
+        const expl = kb <= 500 ? "Léger — bon pour les connexions mobiles."
+          : kb <= 1500 ? "Acceptable. Des optimisations restent possibles."
+          : "Trop lourd — beaucoup de visiteurs partiront avant l'affichage complet.";
+        metricRow("Poids total de la page", label, col, expl, pct, col);
+      }
+
+      if (vitals.requestCount !== null) {
+        const n = vitals.requestCount;
+        const pct = Math.min(100, Math.round((n / 150) * 100));
+        const col = scoreColor(100 - pct);
+        const expl = n <= 40 ? "Nombre raisonnable de ressources."
+          : n <= 80 ? "Assez élevé. Certains fichiers pourraient être regroupés."
+          : "Trop de ressources — chaque requête ajoute du délai.";
+        metricRow("Nombre de requêtes", `${n}`, col, expl, pct, col);
+      }
     }
   }
 
   // ════════════════════════════════════════════════════════════════════════════
-  // PAGE 4 — AOF (si présent)
+  // PAGE 4 — AOF
   // ════════════════════════════════════════════════════════════════════════════
   const aof = data.details.aof;
   if (aof) {
     doc.addPage();
-    y = 18;
-    sectionTitle("Votre site vu depuis l'Afrique de l'Ouest");
+    y = 20;
 
-    text(
-      "Google mesure les performances depuis l'Europe. Cette section simule ce que vit un visiteur à Dakar, Abidjan ou Lomé — sur mobile 4G standard.",
-      ML, y, { size: 9, color: C.pierre as RGB, maxWidth: CW }
+    section(
+      "Performance depuis l'Afrique de l'Ouest",
+      "Simulation 4G mobile depuis Dakar, Abidjan ou Lomé. Les mesures standard (Google) sont calculées depuis l'Europe.",
     );
-    y += 10;
 
-    renderAofSection(doc, aof, ML, y, CW, text, drawRect, scoreColor, scoreBar);
+    const aofCol = scoreColor(aof.aofScore);
+    metricRow("Score AOF global", `${aof.aofScore} / 100`, aofCol, undefined, aof.aofScore, aofCol);
+
+    if (aof.estimatedLoad3G_ms !== null) {
+      const ms = aof.estimatedLoad3G_ms;
+      const col = ms <= 3000 ? C.success : ms <= 8000 ? C.warning : C.error;
+      const expl = ms <= 3000 ? "Rapide — vos visiteurs n'attendent pas."
+        : ms <= 8000 ? "Lent — certains visiteurs partiront avant le chargement."
+        : "Très lent — la majorité des visiteurs mobiles ne verra pas votre site.";
+      metricRow("Temps de chargement 4G estimé", `~${(ms / 1000).toFixed(1)} s`, col, expl);
+    }
+
+    if (aof.totalByteWeightKb !== null) {
+      const kb = aof.totalByteWeightKb;
+      const col = kb <= 500 ? C.success : kb <= 1500 ? C.warning : C.error;
+      const label = kb >= 1024 ? `${(kb / 1024).toFixed(1)} Mo` : `${kb} Ko`;
+      const expl = kb <= 500 ? "Léger — idéal pour les forfaits mobiles limités."
+        : kb <= 1500 ? "Lourd pour un forfait mobile limité."
+        : "Trop lourd — coûteux en data pour vos visiteurs.";
+      metricRow("Poids de la page", label, col, expl);
+    }
+
+    const cdnCol = aof.hasCDN ? C.success : C.error;
+    const cdnExpl = aof.hasCDN
+      ? `Actif via ${aof.cdnProvider ?? "CDN détecté"}. Vos ressources arrivent plus vite.`
+      : "Absent. Vos fichiers viennent d'un serveur en Europe (+150 à 400 ms).";
+    metricRow("Réseau de diffusion (CDN)", aof.hasCDN ? (aof.cdnProvider ?? "Actif") : "Absent", cdnCol, cdnExpl);
+
+    const swCol = aof.hasServiceWorker ? C.success : C.muted;
+    const swExpl = aof.hasServiceWorker
+      ? "Votre site reste accessible lors d'une coupure réseau."
+      : "En cas de coupure réseau (fréquent en AOF), votre site devient totalement inaccessible.";
+    metricRow("Mode hors-ligne (Service Worker)", aof.hasServiceWorker ? "Disponible" : "Absent", swCol, swExpl);
+
+    // AOF directives
+    if (aof.directives.length > 0) {
+      y += 4;
+      section("Actions spécifiques");
+      renderDirectives(aof.directives);
+    }
   }
 
   // ════════════════════════════════════════════════════════════════════════════
-  // PAGE 5 — RECOMMANDATIONS
+  // PAGE — RECOMMANDATIONS
   // ════════════════════════════════════════════════════════════════════════════
   doc.addPage();
-  y = 18;
-  sectionTitle("Vos priorités d'action");
+  y = 20;
 
-  text(
-    "Ces actions sont classées par ordre d'impact. Commencer par les premières vous donnera les meilleurs résultats le plus rapidement.",
-    ML, y, { size: 9, color: C.pierre as RGB, maxWidth: CW }
+  section(
+    "Priorités d'action",
+    "Classées par ordre d'impact. Traitez les éléments « Impact fort » en premier.",
   );
-  y += 10;
 
   if (data.recommandations.length === 0) {
-    text("Aucune recommandation prioritaire — votre site est bien configuré.", ML, y, {
-      size: 10, color: C.success as RGB,
+    t("Aucune recommandation prioritaire — votre site est bien configuré.", ML, y, {
+      size: 10, color: C.success,
     });
   } else {
-    const impactColors: Record<string, RGB> = {
-      high: C.error as RGB,
-      medium: C.warning as RGB,
-      low: C.pierre as RGB,
-    };
-    const impactLabels: Record<string, string> = { high: "Impact fort", medium: "Impact moyen", low: "Impact faible" };
-    const axeLabels: Record<string, string> = { technique: "Technique", seo: "SEO", presence: "Présence", ux: "Expérience" };
-
     data.recommandations.forEach((r, i) => {
-      const ic = impactColors[r.impact];
-      const il = impactLabels[r.impact];
-      const al = axeLabels[r.axe];
-      const descH = textHeight(r.description, 9, CW - 18);
-      const blockH = descH + 22;
-      checkPageBreak(blockH + 4);
+      const impactColor: Record<string, RGB> = {
+        high: C.error, medium: C.warning, low: C.muted,
+      };
+      const impactLabel: Record<string, string> = {
+        high: "Impact fort", medium: "Impact moyen", low: "Impact faible",
+      };
+      const axeLabel: Record<string, string> = {
+        technique: "Technique", seo: "SEO", presence: "Présence", ux: "Expérience",
+      };
 
-      drawRect(ML, y, CW, blockH, C.white as RGB, C.sable as RGB);
+      const ic = impactColor[r.impact] ?? C.muted;
+      const il = impactLabel[r.impact] ?? r.impact;
+      const al = axeLabel[r.axe] ?? r.axe;
 
-      // Number
-      drawRect(ML + 3, y + 3, 7, 7, ic);
-      text(`${i + 1}`, ML + 6.5, y + 8.5, { size: 8, bold: true, color: C.white as RGB, align: "center" });
+      const descH = lineHeight(r.description, 9, CW - 12);
+      const blockH = 7 + descH + 10;
+      pageBreakCheck(blockH + 6);
 
-      // Title
-      text(r.titre, ML + 13, y + 8.5, { size: 10, bold: true, color: C.charbon as RGB });
+      // Number dot (minimal — just text, colored)
+      t(`${i + 1}.`, ML, y + 5, { size: 9, bold: true, color: ic });
 
-      // Badges
-      drawRect(PW - MR - 40, y + 3, 20, 6, ic);
-      text(il, PW - MR - 30, y + 7.5, { size: 7, bold: true, color: C.white as RGB, align: "center" });
-      drawRect(PW - MR - 18, y + 3, 15, 6, C.sable as RGB);
-      text(al, PW - MR - 10.5, y + 7.5, { size: 7, color: C.pierre as RGB, align: "center" });
+      // Title + tags
+      t(r.titre, ML + 8, y + 5, { size: 10, bold: true, color: C.ink });
+      t(`${il}  ·  ${al}`, PW - MR, y + 5, { size: 8, color: ic, align: "right" });
+
+      y += 8;
 
       // Description
-      text(r.description, ML + 13, y + 16, { size: 9, color: C.pierre as RGB, maxWidth: CW - 18 });
+      t(r.description, ML + 8, y, { size: 9, color: C.muted, maxW: CW - 10 });
+      y += descH + 6;
 
-      y += blockH + 4;
-    });
-  }
-
-  // ── AOF directives in recommendations page ─────────────────────────────────
-  if (aof && aof.directives.length > 0) {
-    checkPageBreak(12);
-    y += 4;
-    sectionTitle("Actions spécifiques Afrique de l'Ouest");
-
-    const typeColors: Record<string, RGB> = {
-      critique: C.error as RGB,
-      warning: C.warning as RGB,
-      info: [3, 105, 161] as RGB,
-    };
-    const typeLabels: Record<string, string> = { critique: "Problème", warning: "Attention", info: "Conseil" };
-
-    aof.directives.forEach((d, i) => {
-      const col = typeColors[d.type];
-      const lbl = typeLabels[d.type];
-      const bodyH = textHeight(d.corps, 9, CW - 16);
-      const actionH = textHeight(d.action, 8.5, CW - 24);
-      const blockH = bodyH + actionH + 26;
-      checkPageBreak(blockH + 4);
-
-      drawRect(ML, y, 3, blockH, col);
-      drawRect(ML + 3, y, CW - 3, blockH, C.white as RGB, C.sable as RGB);
-
-      // Badge + title
-      drawRect(ML + 7, y + 3, 18, 5.5, col);
-      text(lbl, ML + 16, y + 7.5, { size: 7, bold: true, color: C.white as RGB, align: "center" });
-      text(d.titre, ML + 28, y + 7.5, { size: 10, bold: true, color: C.charbon as RGB });
-
-      // Body
-      text(d.corps, ML + 7, y + 14, { size: 9, color: C.charbon as RGB, maxWidth: CW - 16 });
-
-      // Action
-      const actionY = y + 14 + bodyH + 2;
-      setFill([245, 243, 236] as RGB);
-      doc.rect(ML + 7, actionY, CW - 14, actionH + 6, "F");
-      text("Ce qu'il faut faire", ML + 10, actionY + 5, { size: 7.5, bold: true, color: col });
-      text(d.action, ML + 10, actionY + 10, { size: 8.5, color: C.charbon as RGB, maxWidth: CW - 20 });
-
-      y += blockH + 5;
-      if (i < aof.directives.length - 1) checkPageBreak(10);
+      rule(ML, y, CW);
+      y += 5;
     });
   }
 
   // ── Footers ────────────────────────────────────────────────────────────────
-  footer();
+  renderFooters();
 
   // ── Save ───────────────────────────────────────────────────────────────────
   doc.save(`rapport-${data.hostname}-vitrinai.pdf`);
+
+  // ── Inner renderers ────────────────────────────────────────────────────────
+
+  function renderVitalsSection(v: VitalsData) {
+    const items = [
+      {
+        key: "lcp" as const,
+        label: "Affichage du contenu principal (LCP)",
+        unit: "s",
+        good: 2.5,
+        poor: 4,
+        convert: (n: number) => +(n / 1000).toFixed(2),
+        expl: (val: number, s: string) =>
+          s === "good" ? "Votre page s'affiche rapidement."
+          : s === "needs-improvement" ? `${val} s avant que le contenu principal apparaisse.`
+          : `${val} s — trop lent, la majorité des visiteurs partira avant.`,
+      },
+      {
+        key: "fcp" as const,
+        label: "Première apparition à l'écran (FCP)",
+        unit: "s",
+        good: 1.8,
+        poor: 3,
+        convert: (n: number) => +(n / 1000).toFixed(2),
+        expl: (val: number, s: string) =>
+          s === "good" ? "Votre page réagit vite."
+          : s === "needs-improvement" ? `${val} s avant la première apparition à l'écran.`
+          : `${val} s de page blanche — vos visiteurs pensent que le site est cassé.`,
+      },
+      {
+        key: "tbt" as const,
+        label: "Temps de blocage (TBT)",
+        unit: "ms",
+        good: 200,
+        poor: 600,
+        convert: (n: number) => Math.round(n),
+        expl: (val: number, s: string) =>
+          s === "good" ? "La page répond bien aux interactions."
+          : s === "needs-improvement" ? `${val} ms de blocage — la page peut sembler figée.`
+          : `${val} ms bloqués — sur mobile, c'est critique.`,
+      },
+      {
+        key: "cls" as const,
+        label: "Stabilité de la mise en page (CLS)",
+        unit: "",
+        good: 0.1,
+        poor: 0.25,
+        convert: (n: number) => +n.toFixed(3),
+        expl: (_val: number, s: string) =>
+          s === "good" ? "Les éléments restent bien en place pendant le chargement."
+          : s === "needs-improvement" ? "Certains éléments bougent légèrement."
+          : "Mise en page instable — risque de clics involontaires sur mobile.",
+      },
+      {
+        key: "ttfb" as const,
+        label: "Réactivité du serveur (TTFB)",
+        unit: "ms",
+        good: 200,
+        poor: 600,
+        convert: (n: number) => Math.round(n),
+        expl: (val: number, s: string) =>
+          s === "good" ? "Votre serveur répond rapidement."
+          : s === "needs-improvement" ? `${val} ms de délai serveur — acceptable mais optimisable.`
+          : `${val} ms — votre hébergement est trop lent.`,
+      },
+    ];
+
+    items.forEach(({ key, label, unit, good, poor, convert, expl }) => {
+      const raw = v[key];
+      if (raw === null) return;
+      const val = convert(raw as number);
+      const status: "good" | "needs-improvement" | "poor" =
+        val <= good ? "good" : val <= poor ? "needs-improvement" : "poor";
+      const col = metricColor(status);
+      const statusLabel = status === "good" ? "Bon" : status === "needs-improvement" ? "À améliorer" : "Problème";
+      const explanation = expl(val, status);
+      const pct = Math.min(100, Math.round((val / (poor * 1.2)) * 100));
+
+      metricRow(
+        label,
+        `${val}${unit}  ·  ${statusLabel}`,
+        col,
+        explanation,
+        pct,
+        col,
+      );
+    });
+  }
+
+  function renderDirectives(directives: AofResult["directives"]) {
+    const typeColor: Record<string, RGB> = {
+      critique: C.error,
+      warning: C.warning,
+      info: [30, 100, 160] as RGB,
+    };
+    const typeLabel: Record<string, string> = {
+      critique: "Problème", warning: "Attention", info: "Information",
+    };
+
+    directives.forEach((d) => {
+      const col = typeColor[d.type] ?? C.muted;
+      const lbl = typeLabel[d.type] ?? d.type;
+
+      const bodyH = lineHeight(d.corps, 9, CW - 8);
+      const actionH = lineHeight(d.action, 8.5, CW - 12);
+      const blockH = 8 + bodyH + 6 + actionH + 8;
+      pageBreakCheck(blockH + 6);
+
+      // Type marker + title
+      t(`[${lbl}]`, ML, y + 5, { size: 8, bold: true, color: col });
+      const lblW = ([lbl].map(s => s.length * 1.9 + 4)[0]);
+      t(d.titre, ML + lblW + 4, y + 5, { size: 10, bold: true, color: C.ink });
+
+      y += 8;
+      t(d.corps, ML, y, { size: 9, color: C.body, maxW: CW });
+      y += bodyH + 5;
+
+      t("Action recommandée :", ML, y, { size: 8, bold: true, color: col });
+      y += 4;
+      t(d.action, ML + 4, y, { size: 8.5, color: C.body, maxW: CW - 6 });
+      y += actionH + 6;
+
+      rule(ML, y, CW);
+      y += 5;
+    });
+  }
 }
 
 // ── Summary builder ────────────────────────────────────────────────────────────
 function buildSummary(scores: AuditScores, details: AuditDetails): string {
   const g = scores.global;
   const intro = g >= 70
-    ? `Votre site obtient la note ${scores.grade} avec ${g}/100. C'est une bonne base.`
+    ? `Ce site obtient la note ${scores.grade} avec un score global de ${g}/100. C'est une base solide.`
     : g >= 45
-      ? `Votre site obtient la note ${scores.grade} avec ${g}/100. Il y a des axes importants à améliorer.`
-      : `Votre site obtient la note ${scores.grade} avec ${g}/100. Votre présence digitale est insuffisante et vous fait perdre des clients potentiels.`;
+      ? `Ce site obtient la note ${scores.grade} avec un score global de ${g}/100. Des axes importants restent à améliorer.`
+      : `Ce site obtient la note ${scores.grade} avec un score global de ${g}/100. La présence digitale est insuffisante et pénalise sa visibilité.`;
 
-  const checks = details.technique.checks.concat(details.seo.checks, details.presence.checks, details.ux.checks);
+  const checks = [
+    ...details.technique.checks,
+    ...details.seo.checks,
+    ...details.presence.checks,
+    ...details.ux.checks,
+  ];
   const fails = checks.filter((c) => c.status === "fail" && c.impact === "high").length;
   const warns = checks.filter((c) => c.status === "warn").length;
 
-  const issues = fails > 0
+  const issuesPart = fails > 0
     ? ` ${fails} problème${fails > 1 ? "s" : ""} critique${fails > 1 ? "s" : ""} ont été détectés`
     : "";
-  const warnings = warns > 0
-    ? ` et ${warns} point${warns > 1 ? "s" : ""} à améliorer`
+  const warnPart = warns > 0
+    ? `${fails > 0 ? " et " : " "}${warns} point${warns > 1 ? "s" : ""} à améliorer`
     : "";
 
   const cta = fails > 0
-    ? " Commencez par corriger les problèmes critiques — ce sont eux qui vous font le plus perdre de visiteurs."
+    ? " Commencer par les problèmes critiques donnera les meilleurs résultats."
     : warns > 0
-      ? " Quelques améliorations peuvent significativement renforcer votre visibilité."
-      : " Continuez à entretenir votre site.";
+      ? " Quelques corrections ciblées peuvent significativement renforcer la visibilité."
+      : " Le site est bien configuré — continuer à entretenir les bonnes pratiques.";
 
-  return intro + (issues || warnings ? issues + warnings + "." : "") + cta;
-}
-
-// ── Vitals renderer ───────────────────────────────────────────────────────────
-function renderVitals(
-  doc: InstanceType<typeof import("jspdf").default>,
-  vitals: VitalsData,
-  x: number,
-  startY: number,
-  w: number
-) {
-  const items = [
-    { key: "lcp" as const, titre: "Temps d'affichage principal", unit: "s", good: 2.5, poor: 4, convert: (v: number) => +(v / 1000).toFixed(2) },
-    { key: "fcp" as const, titre: "Première apparition à l'écran", unit: "s", good: 1.8, poor: 3, convert: (v: number) => +(v / 1000).toFixed(2) },
-    { key: "tbt" as const, titre: "Temps de blocage", unit: "ms", good: 200, poor: 600, convert: (v: number) => Math.round(v) },
-    { key: "cls" as const, titre: "Stabilité de la page", unit: "", good: 0.1, poor: 0.25, convert: (v: number) => +v.toFixed(3) },
-    { key: "ttfb" as const, titre: "Réactivité du serveur", unit: "ms", good: 200, poor: 600, convert: (v: number) => Math.round(v) },
-  ];
-
-  const expl: Record<string, (v: number, status: string) => string> = {
-    lcp: (v, s) => s === "good" ? "Votre page s'affiche rapidement." : s === "needs-improvement" ? `${v}s — quelques secondes d'attente avant de voir le contenu principal.` : `${v}s — trop lent, la majorité des visiteurs partira avant.`,
-    fcp: (v, s) => s === "good" ? "Votre page réagit vite." : s === "needs-improvement" ? `${v}s avant la première apparition à l'écran.` : `${v}s de page blanche — vos visiteurs pensent que le site est cassé.`,
-    tbt: (v, s) => s === "good" ? "Votre page répond bien aux clics." : s === "needs-improvement" ? `${v}ms de blocage — la page peut sembler figée.` : `${v}ms bloqués — sur mobile, c'est insupportable.`,
-    cls: (_v, s) => s === "good" ? "Les éléments restent bien en place." : s === "needs-improvement" ? "Certains éléments bougent légèrement pendant le chargement." : "Mise en page très instable — risque de clics involontaires.",
-    ttfb: (v, s) => s === "good" ? "Votre serveur répond vite." : s === "needs-improvement" ? `${v}ms de délai serveur.` : `${v}ms — votre hébergement est trop lent.`,
-  };
-
-  let cy = startY;
-  doc.setFontSize(9);
-
-  items.forEach(({ key, titre, unit, good, poor, convert }) => {
-    const raw = vitals[key];
-    if (raw === null) return;
-    const v = convert(raw as number);
-    const pct = Math.min(100, Math.round((v / (poor * 1.2)) * 100));
-    const status = v <= good ? "good" : v <= poor ? "needs-improvement" : "poor";
-    const col = status === "good" ? C.success : status === "needs-improvement" ? C.warning : C.error;
-    const sl = status === "good" ? "Bon" : status === "needs-improvement" ? "À améliorer" : "Problème";
-    const ex = expl[key]?.(v, status) ?? "";
-
-    const exH = Math.ceil(ex.length / 90) * 3.5 + 1;
-    const blockH = 6 + 5 + exH + 5;
-
-    doc.setFillColor(255, 255, 255);
-    doc.setDrawColor(C.sable[0], C.sable[1], C.sable[2]);
-    doc.roundedRect(x, cy, w, blockH, 1.5, 1.5, "FD");
-
-    // Title row
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(9.5);
-    doc.setTextColor(C.charbon[0], C.charbon[1], C.charbon[2]);
-    doc.text(titre, x + 4, cy + 5.5);
-
-    // Value + badge
-    doc.setTextColor(col[0], col[1], col[2]);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(10);
-    doc.text(`${v}${unit}`, x + w - 4, cy + 5.5, { align: "right" });
-
-    doc.setFillColor(col[0], col[1], col[2]);
-    const badgeW = sl.length * 1.6 + 4;
-    doc.roundedRect(x + w - badgeW - 4 - 18, cy + 1.5, badgeW, 5, 1, 1, "F");
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(6.5);
-    doc.setTextColor(255, 255, 255);
-    doc.text(sl, x + w - 4 - 18 - badgeW / 2, cy + 5.5, { align: "center" });
-
-    // Bar
-    const barX = x + 4;
-    const barW = w - 8;
-    doc.setFillColor(C.sable[0], C.sable[1], C.sable[2]);
-    doc.roundedRect(barX, cy + 8.5, barW, 2.5, 0.8, 0.8, "F");
-    doc.setFillColor(col[0], col[1], col[2]);
-    doc.roundedRect(barX, cy + 8.5, Math.max(3, barW * pct / 100), 2.5, 0.8, 0.8, "F");
-
-    // Explanation
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(8.5);
-    doc.setTextColor(C.pierre[0], C.pierre[1], C.pierre[2]);
-    const exLines = doc.splitTextToSize(ex, w - 8);
-    doc.text(exLines, x + 4, cy + 14);
-
-    cy += blockH + 3;
-  });
-}
-
-function estimateVitalsHeight(vitals: VitalsData): number {
-  const keys = (["lcp", "fcp", "tbt", "cls", "ttfb"] as const).filter((k) => vitals[k] !== null);
-  return keys.length * 30 + 10;
-}
-
-function renderWeightBlock(
-  _doc: InstanceType<typeof import("jspdf").default>,
-  vitals: VitalsData,
-  x: number,
-  startY: number,
-  w: number,
-  text: (str: string, x: number, y: number, opts?: Record<string, unknown>) => void,
-  drawRect: (x: number, y: number, w: number, h: number, fill: RGB, draw?: RGB) => void,
-  scoreBar: (x: number, y: number, w: number, pct: number, col: RGB) => void,
-  scoreColorFn: (pct: number) => RGB,
-) {
-  let cy = startY;
-
-  if (vitals.totalByteWeightKb !== null) {
-    const kb = vitals.totalByteWeightKb;
-    const pct = Math.min(100, Math.round((kb / 3000) * 100));
-    const col = scoreColorFn(100 - pct);
-    const label = kb >= 1024 ? `${(kb / 1024).toFixed(1)} Mo` : `${kb} Ko`;
-    drawRect(x, cy, w, 14, C.white as RGB, C.sable as RGB);
-    text(`Poids total : ${label}`, x + 4, cy + 5.5, { size: 9.5, bold: true });
-    scoreBar(x + 4, cy + 8, w - 8, pct, col);
-    cy += 18;
-  }
-  if (vitals.requestCount !== null) {
-    const n = vitals.requestCount;
-    const pct = Math.min(100, Math.round((n / 150) * 100));
-    const col = scoreColorFn(100 - pct);
-    drawRect(x, cy, w, 14, C.white as RGB, C.sable as RGB);
-    text(`Nombre de requêtes : ${n}`, x + 4, cy + 5.5, { size: 9.5, bold: true });
-    scoreBar(x + 4, cy + 8, w - 8, pct, col);
-    cy += 18;
-  }
-}
-
-function renderAofSection(
-  _doc: InstanceType<typeof import("jspdf").default>,
-  aof: AofResult,
-  x: number,
-  startY: number,
-  w: number,
-  text: (str: string, x: number, y: number, opts?: Record<string, unknown>) => void,
-  drawRect: (x: number, y: number, w: number, h: number, fill: RGB, draw?: RGB) => void,
-  scoreColorFn: (pct: number) => RGB,
-  scoreBar: (x: number, y: number, w: number, pct: number, col: RGB) => void,
-) {
-  let cy = startY;
-
-  // AOF score
-  const aofCol = scoreColorFn(aof.aofScore);
-  drawRect(x, cy, w, 14, C.white as RGB, C.sable as RGB);
-  text(`Score AOF global : ${aof.aofScore}/100`, x + 4, cy + 5.5, { size: 10, bold: true });
-  scoreBar(x + 4, cy + 8, w - 8, aof.aofScore, aofCol);
-  cy += 18;
-
-  // Tiles
-  const tiles = [
-    {
-      label: "Chargement 4G",
-      val: aof.estimatedLoad3G_ms !== null
-        ? `~${(aof.estimatedLoad3G_ms / 1000).toFixed(1)}s`
-        : "N/D",
-      ok: aof.estimatedLoad3G_ms !== null ? aof.estimatedLoad3G_ms <= 5000 : null,
-      expl: aof.estimatedLoad3G_ms === null ? "Non mesuré"
-        : aof.estimatedLoad3G_ms <= 3000 ? "Rapide — vos clients n'attendent pas."
-        : aof.estimatedLoad3G_ms <= 8000 ? "Lent — des visiteurs partiront avant l'affichage."
-        : "Très lent — la majorité de vos visiteurs mobiles ne verra pas votre site.",
-    },
-    {
-      label: "Poids page",
-      val: aof.totalByteWeightKb !== null
-        ? aof.totalByteWeightKb >= 1024 ? `${(aof.totalByteWeightKb / 1024).toFixed(1)} Mo` : `${aof.totalByteWeightKb} Ko`
-        : "N/D",
-      ok: aof.totalByteWeightKb !== null ? aof.totalByteWeightKb <= 500 : null,
-      expl: aof.totalByteWeightKb === null ? "Non mesuré"
-        : aof.totalByteWeightKb <= 500 ? "Léger — idéal pour les connexions mobiles."
-        : aof.totalByteWeightKb <= 1500 ? "Lourd pour un forfait mobile limité."
-        : "Trop lourd — beaucoup de visiteurs ne verront jamais votre contenu.",
-    },
-    {
-      label: "CDN",
-      val: aof.cdnProvider ?? "Absent",
-      ok: aof.hasCDN,
-      expl: aof.hasCDN
-        ? `Actif via ${aof.cdnProvider}. Vos ressources arrivent plus vite chez vos visiteurs.`
-        : "Absent. Vos fichiers viennent d'un serveur en Europe — 150 à 400 ms de délai supplémentaire.",
-    },
-    {
-      label: "Mode hors-ligne",
-      val: aof.hasServiceWorker ? "Disponible" : "Absent",
-      ok: aof.hasServiceWorker,
-      expl: aof.hasServiceWorker
-        ? "Votre site reste accessible même lors d'une coupure réseau."
-        : "En cas de coupure réseau (fréquent en AOF), votre site devient totalement inaccessible.",
-    },
-  ];
-
-  const tileW = (w - 9) / 2;
-  tiles.forEach((t, i) => {
-    const tx = x + (i % 2) * (tileW + 3);
-    const ty = cy + Math.floor(i / 2) * 28;
-    const col = t.ok === null ? C.pierre as RGB : t.ok ? C.success as RGB : C.error as RGB;
-
-    drawRect(tx, ty, tileW, 24, C.white as RGB, C.sable as RGB);
-    text(t.label, tx + 4, ty + 5.5, { size: 7.5, color: C.pierre as RGB });
-    text(t.val, tx + 4, ty + 11, { size: 10, bold: true, color: col });
-    text(t.expl, tx + 4, ty + 17, { size: 7.5, color: C.pierre as RGB, maxWidth: tileW - 8 });
-  });
-  cy += 60;
-  return cy;
+  return intro + (issuesPart || warnPart ? issuesPart + warnPart + "." : "") + cta;
 }
