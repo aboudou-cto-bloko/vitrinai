@@ -19,11 +19,16 @@ import {
 } from "@phosphor-icons/react";
 import { ExportPdfButton } from "./ExportPdfButton";
 import { ThemePanel } from "./ThemePanel";
+import { ActionPlanSection } from "./ActionPlanSection";
+import { BadgeSection } from "./BadgeSection";
+import { SuiviSection } from "./SuiviSection";
+import { ConcurrentSection } from "./ConcurrentSection";
 import { WebVitalsSection } from "@/components/rapport/WebVitalsSection";
 import { AofSection } from "@/components/rapport/AofSection";
 import { useSession } from "@/lib/auth-client";
 import { resolveTheme, DEFAULT_THEME, type ReportThemeConfig } from "@/lib/report-themes";
 import type { AuditDetails, AuditScores, Recommandation, Check } from "@/lib/audit/types";
+import type { ActionStep, ConcurrentAnalysis } from "@/lib/premium-types";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface Props {
@@ -36,6 +41,9 @@ interface Props {
   gated?: boolean;
   initialTheme?: ReportThemeConfig;
   isOwner?: boolean;
+  initialActionPlan?: ActionStep[];
+  initialBadgeUnlocked?: boolean;
+  initialConcurrentAnalysis?: ConcurrentAnalysis;
 }
 
 // ── Animated number ───────────────────────────────────────────────────────────
@@ -451,6 +459,7 @@ function DocumentHeader({
 export function RapportContent({
   auditId, url, scores, details, recommandations, hostname,
   gated = false, initialTheme, isOwner = false,
+  initialActionPlan, initialBadgeUnlocked, initialConcurrentAnalysis,
 }: Props) {
   const { data: session } = useSession();
   const isGated = gated && !session;
@@ -551,6 +560,33 @@ export function RapportContent({
                 ))}
               </div>
             </section>
+
+            {/* Features premium */}
+            {!isGated && (
+              <section className="space-y-2">
+                <SuiviSection auditId={auditId} isOwner={isOwner} />
+                <ActionPlanSection
+                  auditId={auditId}
+                  initialPlan={initialActionPlan}
+                  isOwner={isOwner}
+                />
+                <BadgeSection
+                  auditId={auditId}
+                  hostname={hostname}
+                  score={scores.global}
+                  grade={scores.grade}
+                  isOwner={isOwner}
+                  initialUnlocked={initialBadgeUnlocked}
+                />
+                <ConcurrentSection
+                  auditId={auditId}
+                  hostname={hostname}
+                  ownScores={scores}
+                  isOwner={isOwner}
+                  initialAnalysis={initialConcurrentAnalysis}
+                />
+              </section>
+            )}
 
             {/* CTA final */}
             <motion.section

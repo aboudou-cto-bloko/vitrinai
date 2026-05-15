@@ -81,10 +81,43 @@ export default defineSchema({
       headerBg: v.optional(v.string()),
       fontChoice: v.optional(v.string()),
     })),
+    // Feature: Plan d'action IA
+    actionPlan: v.optional(v.array(v.object({
+      numero: v.number(),
+      titre: v.string(),
+      description: v.string(),
+      effort: v.string(),
+      impact: v.string(),
+      axe: v.string(),
+    }))),
+    // Feature: Badge + QR code
+    badgeUnlocked: v.optional(v.boolean()),
+    // Feature: Analyse concurrentielle
+    concurrentAnalysis: v.optional(v.object({
+      urls: v.array(v.string()),
+      status: v.string(), // "pending" | "done" | "error"
+      results: v.optional(v.array(v.any())),
+      synthese: v.optional(v.string()),
+    })),
     createdAt: v.number(),
   })
     .index("by_url", ["url"])
     .index("by_userId", ["userId"]),
+
+  // Feature: Suivi mensuel
+  suivis: defineTable({
+    auditId: v.id("audits"),
+    userId: v.id("users"),
+    url: v.string(),
+    actif: v.boolean(),
+    dernierScore: v.optional(v.number()),
+    dernierGrade: v.optional(v.string()),
+    createdAt: v.number(),
+    prochainAudit: v.number(),
+  })
+    .index("by_userId", ["userId"])
+    .index("by_url", ["url"])
+    .index("by_prochainAudit", ["prochainAudit"]),
 
   // ── Suivi des audits anonymes (1 gratuit par IP) ────────────────────────────
   anonymousAudits: defineTable({

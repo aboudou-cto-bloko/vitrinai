@@ -12,6 +12,22 @@ import { fetchAuthQuery, isAuthenticated } from "@/lib/auth-server";
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
+interface ActionStep {
+  numero: number;
+  titre: string;
+  description: string;
+  effort: string;
+  impact: string;
+  axe: string;
+}
+
+interface ConcurrentAnalysis {
+  urls: string[];
+  status: string;
+  results?: Array<{ url: string; scores: Record<string, number | string>; grade: string; global: number }>;
+  synthese?: string;
+}
+
 interface AuditData {
   userId?: Id<"users">;
   url: string;
@@ -20,6 +36,9 @@ interface AuditData {
   recommandations: Recommandation[];
   createdAt: number;
   theme?: ReportThemeConfig;
+  actionPlan?: ActionStep[];
+  badgeUnlocked?: boolean;
+  concurrentAnalysis?: ConcurrentAnalysis;
 }
 
 type FetchResult =
@@ -50,6 +69,9 @@ async function fetchAudit(id: string): Promise<FetchResult> {
         recommandations,
         createdAt: audit.createdAt,
         theme: audit.theme as ReportThemeConfig | undefined,
+        actionPlan: audit.actionPlan as ActionStep[] | undefined,
+        badgeUnlocked: audit.badgeUnlocked as boolean | undefined,
+        concurrentAnalysis: audit.concurrentAnalysis as ConcurrentAnalysis | undefined,
       },
     };
   } catch {
@@ -111,7 +133,7 @@ export default async function RapportPage({
   if (result.state === "error") notFound();
   if (result.state === "pending") return <RapportPoller id={id} />;
 
-  const { url, scores, details, recommandations, userId, theme } = result.data;
+  const { url, scores, details, recommandations, userId, theme, actionPlan, badgeUnlocked, concurrentAnalysis } = result.data;
   const hostname = new URL(url).hostname;
 
   // Vérifier si l'utilisateur connecté est propriétaire de cet audit
@@ -133,6 +155,9 @@ export default async function RapportPage({
         gated={gated === "1"}
         initialTheme={theme ?? { preset: "standard" }}
         isOwner={isOwner}
+        initialActionPlan={actionPlan}
+        initialBadgeUnlocked={badgeUnlocked}
+        initialConcurrentAnalysis={concurrentAnalysis}
       />
       <RapportUpsell analyzedUrl={url} />
     </>
