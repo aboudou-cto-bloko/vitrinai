@@ -2,7 +2,7 @@
 
 import { useQuery } from "convex/react";
 import { api } from "@/../convex/_generated/api";
-import { CheckCircle, XCircle, Clock, TrendUp, Globe, ChartBar } from "@phosphor-icons/react";
+import { CheckCircle, XCircle, Clock, TrendUp, Globe, ChartBar, FilmSlate, WarningCircle } from "@phosphor-icons/react";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -57,8 +57,25 @@ function StatCard({
 
 // ─────────────────────────────────────────────────────────────────────────────
 
+// ── Bloc insight : une stat en grand ─────────────────────────────────────────
+
+function InsightStat({ pct, label, sub, color = "text-red-600" }: {
+  pct: number; label: string; sub?: string; color?: string;
+}) {
+  return (
+    <div className="flex flex-col gap-1 p-4 bg-parchemin rounded-xl border border-bordure">
+      <span className={`text-[32px] font-bold leading-none ${color}`}>{pct}%</span>
+      <span className="text-[12px] font-semibold text-charbon leading-snug">{label}</span>
+      {sub && <span className="text-[10px] text-pierre leading-snug">{sub}</span>}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 export default function AdminAnalysesPage() {
   const stats = useQuery(api.audits.getAuditStats);
+  const insights = useQuery(api.audits.getInsights);
 
   if (!stats) {
     return (
@@ -283,6 +300,60 @@ export default function AdminAnalysesPage() {
         </div>
 
       </div>
+
+      {/* ── Insights vidéo ─────────────────────────────────────────────────── */}
+      {insights && (
+        <div className="bg-white rounded-2xl border border-bordure p-6">
+          <div className="flex items-center gap-2 mb-1">
+            <FilmSlate size={16} weight="duotone" className="text-savane" />
+            <h3 className="text-[14px] font-semibold text-charbon">Insights — données pour la vidéo</h3>
+          </div>
+          <p className="text-[12px] text-pierre mb-5">
+            Calculé sur <strong>{insights.total} sites terminés</strong>. Score moyen global :{" "}
+            <strong>{insights.scoreMoyen}/100</strong> · <strong>{insights.gradeDFpct}%</strong> ont un grade D ou F.
+          </p>
+
+          <p className="text-[11px] font-semibold text-pierre uppercase tracking-widest mb-3 flex items-center gap-1.5">
+            <WarningCircle size={12} className="text-red-400" weight="fill" />
+            Présence locale
+          </p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-5">
+            <InsightStat pct={insights.presence.sansGoogleMapsPct} label="sans Google Maps" sub="Introuvables sur Maps" />
+            <InsightStat pct={insights.presence.sansFacebookPct} label="sans page Facebook" sub="Réseau n°1 en AOF" />
+            <InsightStat pct={insights.presence.sansWhatsAppPct} label="sans WhatsApp lié" sub="Canal privilégié UEMOA" />
+          </div>
+
+          <p className="text-[11px] font-semibold text-pierre uppercase tracking-widest mb-3 flex items-center gap-1.5">
+            <WarningCircle size={12} className="text-orange-400" weight="fill" />
+            Référencement
+          </p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-5">
+            <InsightStat pct={insights.seo.sansMetaDescPct} label="sans meta description" sub="Invisible dans Google" color="text-orange-600" />
+            <InsightStat pct={insights.seo.sansTitrePct} label="sans balise title" sub="Critique pour le SEO" color="text-orange-600" />
+            <InsightStat pct={insights.seo.sansSitemapPct} label="sans sitemap.xml" sub="Google indexe à l'aveugle" color="text-orange-600" />
+          </div>
+
+          <p className="text-[11px] font-semibold text-pierre uppercase tracking-widest mb-3 flex items-center gap-1.5">
+            <WarningCircle size={12} className="text-amber-400" weight="fill" />
+            Technique & Performance
+          </p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-5">
+            <InsightStat pct={insights.technique.sansSSLpct} label="sans certificat SSL" sub="Marqué 'Non sécurisé'" color="text-amber-600" />
+            <InsightStat pct={insights.technique.nonMobilePct} label="non adapté mobile" sub="74% du trafic AOF = mobile" color="text-amber-600" />
+            <InsightStat pct={insights.technique.slowLoadPct} label="chargent en +8s sur 3G" sub="Estimation réseau africain" color="text-amber-600" />
+          </div>
+
+          <p className="text-[11px] font-semibold text-pierre uppercase tracking-widest mb-3 flex items-center gap-1.5">
+            <WarningCircle size={12} className="text-blue-400" weight="fill" />
+            Contact & UX
+          </p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <InsightStat pct={insights.ux.sansPhonePct} label="sans numéro cliquable" sub="Clients qui repartent" color="text-blue-600" />
+            <InsightStat pct={insights.ux.sansContactPct} label="sans formulaire ni email" sub="Zéro moyen de contact" color="text-blue-600" />
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

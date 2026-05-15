@@ -264,6 +264,97 @@ export const getAuditStats = query({
   },
 });
 
+// ── Admin : insights détaillés par check (pour contenu / vidéo) ──────────────
+
+export const getInsights = query({
+  args: {},
+  handler: async (ctx) => {
+    const audits = await ctx.db
+      .query("audits")
+      .filter((q) => q.eq(q.field("statut"), "terminé"))
+      .take(2000);
+
+    const total = audits.length;
+    if (total === 0) return null;
+
+    // Compteurs par check ID
+    const c = {
+      sansGoogleMaps: 0,
+      sansFacebook: 0,
+      sansWhatsApp: 0,
+      sansMetaDesc: 0,
+      sansTitreSeo: 0,
+      sansSitemap: 0,
+      sansSSL: 0,
+      nonMobile: 0,
+      sansPhone: 0,
+      sansContact: 0,
+      slowLoad: 0,    // estimatedLoad3G_ms > 8 000 ms
+      globalSum: 0,
+      gradeDF: 0,
+    };
+
+    for (const audit of audits) {
+      if (!audit.scores || !audit.details) continue;
+
+      c.globalSum += audit.scores.global;
+      if (audit.scores.grade === "D" || audit.scores.grade === "F") c.gradeDF++;
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const d = audit.details as any;
+
+      for (const check of (d?.presence?.checks ?? [])) {
+        if (check.id === "gmaps"  && check.status === "fail") c.sansGoogleMaps++;
+        if (check.id === "fb"     && check.status === "fail") c.sansFacebook++;
+        if (check.id === "wa"     && (check.status === "fail" || check.status === "warn")) c.sansWhatsApp++;
+      }
+      for (const check of (d?.seo?.checks ?? [])) {
+        if (check.id === "desc"    && check.status === "fail") c.sansMetaDesc++;
+        if (check.id === "title"   && check.status === "fail") c.sansTitreSeo++;
+        if (check.id === "sitemap" && check.status === "warn") c.sansSitemap++;
+      }
+      for (const check of (d?.technique?.checks ?? [])) {
+        if (check.id === "ssl"    && check.status === "fail") c.sansSSL++;
+        if (check.id === "mobile" && check.status === "fail") c.nonMobile++;
+      }
+      for (const check of (d?.ux?.checks ?? [])) {
+        if (check.id === "phone"   && check.status === "fail") c.sansPhone++;
+        if (check.id === "contact" && check.status === "fail") c.sansContact++;
+      }
+
+      const aofLoad = d?.aof?.estimatedLoad3G_ms;
+      if (typeof aofLoad === "number" && aofLoad > 8000) c.slowLoad++;
+    }
+
+    const pct = (n: number) => Math.round((n / total) * 100);
+
+    return {
+      total,
+      scoreMoyen: Math.round(c.globalSum / total),
+      gradeDFpct: pct(c.gradeDF),
+      presence: {
+        sansGoogleMapsPct: pct(c.sansGoogleMaps),
+        sansFacebookPct:   pct(c.sansFacebook),
+        sansWhatsAppPct:   pct(c.sansWhatsApp),
+      },
+      seo: {
+        sansMetaDescPct:  pct(c.sansMetaDesc),
+        sansTitrePct:     pct(c.sansTitreSeo),
+        sansSitemapPct:   pct(c.sansSitemap),
+      },
+      technique: {
+        sansSSLpct:   pct(c.sansSSL),
+        nonMobilePct: pct(c.nonMobile),
+        slowLoadPct:  pct(c.slowLoad),
+      },
+      ux: {
+        sansPhonePct:   pct(c.sansPhone),
+        sansContactPct: pct(c.sansContact),
+      },
+    };
+  },
+});
+
 // ── Dernier audit terminé pour une URL donnée (cache) ────────────────────────
 
 export const getLatestByUrl = query({
