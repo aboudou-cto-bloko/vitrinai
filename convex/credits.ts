@@ -91,6 +91,7 @@ export const debitCredit = internalMutation({
   handler: async (ctx, { userId, auditId, description }) => {
     const user = await ctx.db.get(userId);
     if (!user) throw new Error(`Utilisateur introuvable : ${userId}`);
+    if (user.role === "admin") return user.creditsBalance;
     if (user.creditsBalance < 1) throw new Error("Solde insuffisant");
 
     const balanceAfter = user.creditsBalance - 1;
@@ -133,6 +134,7 @@ export const debitMeForAudit = mutation({
       )
       .unique();
     if (!user) throw new Error("Utilisateur introuvable");
+    if (user.role === "admin") return user.creditsBalance;
     if (user.creditsBalance < 1) throw new Error("Solde insuffisant");
 
     const balanceAfter = user.creditsBalance - 1;

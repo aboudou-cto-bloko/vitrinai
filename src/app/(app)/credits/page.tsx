@@ -1,9 +1,10 @@
 "use client";
 
-import { useQuery } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "@/../convex/_generated/api";
 import { useState } from "react";
 import { toast } from "sonner";
+import { Gift, CircleNotch } from "@phosphor-icons/react";
 import { CREDIT_PACKS, type PackId } from "@/lib/credit-packs";
 import { useSession } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
@@ -55,6 +56,9 @@ export default function CreditsPage() {
   const me = useQuery(api.credits.getMe);
   const history = useQuery(api.credits.getHistory, me ? { userId: me._id } : "skip");
   const [loading, setLoading] = useState<PackId | null>(null);
+  const [promoCode, setPromoCode] = useState("");
+  const [promoLoading, setPromoLoading] = useState(false);
+  const redeemPromoCode = useMutation(api.admin.redeemPromoCode);
 
   // Session en cours de chargement ou page crédits sans auth
   if (!session) {
@@ -176,6 +180,48 @@ export default function CreditsPage() {
             </motion.div>
           ))}
         </div>
+
+        {/* Code promo */}
+        <motion.div
+          className="bg-white rounded-2xl border border-bordure p-5 mb-8"
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.35 }}
+        >
+          <h2 className="font-serif text-[17px] font-medium text-noir mb-3 flex items-center gap-2">
+            <Gift size={17} weight="duotone" className="text-savane" />
+            Utiliser un code promo
+          </h2>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              placeholder="ex : VITRIN2026"
+              value={promoCode}
+              onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+              className="flex-1 h-10 px-3 rounded-xl border border-bordure text-[13px] font-mono text-charbon bg-parchemin focus:outline-none focus:ring-2 focus:ring-savane/30"
+            />
+            <button
+              onClick={async () => {
+                if (!promoCode.trim()) return;
+                setPromoLoading(true);
+                try {
+                  const res = await redeemPromoCode({ code: promoCode.trim() });
+                  toast.success(`+${res.credits} crédits ajoutés ! Nouveau solde : ${res.balanceAfter}`);
+                  setPromoCode("");
+                } catch (err: unknown) {
+                  toast.error(err instanceof Error ? err.message : "Code invalide");
+                } finally {
+                  setPromoLoading(false);
+                }
+              }}
+              disabled={promoLoading || !promoCode.trim()}
+              className="h-10 px-4 rounded-xl bg-savane text-white text-[13px] font-medium hover:bg-savane/90 transition-colors disabled:opacity-40 flex items-center gap-1.5"
+            >
+              {promoLoading ? <CircleNotch size={14} className="animate-spin" /> : <Gift size={14} weight="duotone" />}
+              Utiliser
+            </button>
+          </div>
+        </motion.div>
 
         {/* Historique */}
         {history && history.length > 0 && (

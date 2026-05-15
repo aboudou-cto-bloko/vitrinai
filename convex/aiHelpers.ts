@@ -42,17 +42,19 @@ export const deductAndSave = internalMutation({
   handler: async (ctx, { userId, auditId, cost, description, patch }) => {
     const user = await ctx.db.get(userId);
     if (!user) throw new Error("User not found");
-    const balanceAfter = user.creditsBalance - cost;
-    await ctx.db.patch(userId, { creditsBalance: balanceAfter });
-    await ctx.db.insert("creditTransactions", {
-      userId,
-      type: "debit",
-      amount: -cost,
-      balanceAfter,
-      description,
-      auditId,
-      createdAt: Date.now(),
-    });
+    if (user.role !== "admin") {
+      const balanceAfter = user.creditsBalance - cost;
+      await ctx.db.patch(userId, { creditsBalance: balanceAfter });
+      await ctx.db.insert("creditTransactions", {
+        userId,
+        type: "debit",
+        amount: -cost,
+        balanceAfter,
+        description,
+        auditId,
+        createdAt: Date.now(),
+      });
+    }
     await ctx.db.patch(auditId, patch);
   },
 });
@@ -90,17 +92,19 @@ export const createSuivi = internalMutation({
 
     const user = await ctx.db.get(userId);
     if (!user) throw new Error("User not found");
-    const balanceAfter = user.creditsBalance - cost;
-    await ctx.db.patch(userId, { creditsBalance: balanceAfter });
-    await ctx.db.insert("creditTransactions", {
-      userId,
-      type: "debit",
-      amount: -cost,
-      balanceAfter,
-      description: `Suivi mensuel activé — ${url}`,
-      auditId,
-      createdAt: Date.now(),
-    });
+    if (user.role !== "admin") {
+      const balanceAfter = user.creditsBalance - cost;
+      await ctx.db.patch(userId, { creditsBalance: balanceAfter });
+      await ctx.db.insert("creditTransactions", {
+        userId,
+        type: "debit",
+        amount: -cost,
+        balanceAfter,
+        description: `Suivi mensuel activé — ${url}`,
+        auditId,
+        createdAt: Date.now(),
+      });
+    }
 
     return ctx.db.insert("suivis", {
       auditId,

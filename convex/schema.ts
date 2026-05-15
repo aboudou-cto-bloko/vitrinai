@@ -166,6 +166,28 @@ export default defineSchema({
     .index("by_userId", ["userId"])
     .index("by_monerooPaymentId", ["monerooPaymentId"]),
 
+  // ── Codes promo ──────────────────────────────────────────────────────────────
+  promoCodes: defineTable({
+    code: v.string(),           // ex: "VITRINAI50" — unique, uppercase
+    credits: v.number(),        // crédits accordés à la redemption
+    usesMax: v.optional(v.number()), // null = illimité
+    usesCount: v.number(),
+    expiresAt: v.optional(v.number()),
+    active: v.boolean(),
+    createdBy: v.id("users"),
+    createdAt: v.number(),
+  })
+    .index("by_code", ["code"])
+    .index("by_active", ["active"]),
+
+  promoRedemptions: defineTable({
+    codeId: v.id("promoCodes"),
+    userId: v.id("users"),
+    createdAt: v.number(),
+  })
+    .index("by_code", ["codeId"])
+    .index("by_user_code", ["userId", "codeId"]),
+
   // ── CRM (inchangé) ────────────────────────────────────────────────────────────
   niches: defineTable({
     nom: v.string(),
