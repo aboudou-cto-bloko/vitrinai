@@ -23,25 +23,27 @@ const GRADE_COLOR: Record<string, string> = {
 
 function ScoreBadge({ hostname, score, grade }: { hostname: string; score: number; grade: string }) {
   const color = GRADE_COLOR[grade] ?? "#666";
+  const label = hostname.slice(0, 26);
   return (
-    <div
-      style={{ fontFamily: "system-ui, sans-serif", display: "inline-block" }}
-      className="select-none"
-    >
-      <svg width="240" height="80" viewBox="0 0 240 80" xmlns="http://www.w3.org/2000/svg">
-        <rect width="240" height="80" rx="12" fill="#1c1c1b" />
-        {/* Left accent */}
-        <rect x="0" y="0" width="4" height="80" rx="2" fill={color} />
-        {/* Grade circle */}
-        <circle cx="48" cy="40" r="24" fill={color} opacity="0.15" />
-        <text x="48" y="46" textAnchor="middle" fill={color} fontSize="22" fontWeight="700" fontFamily="system-ui">{grade}</text>
-        {/* Score */}
-        <text x="88" y="30" fill="#f0ede4" fontSize="11" fontFamily="system-ui" opacity="0.6">Présence digitale</text>
-        <text x="88" y="48" fill="#f0ede4" fontSize="18" fontWeight="700" fontFamily="system-ui">{score}<tspan fontSize="11" opacity="0.6">/100</tspan></text>
-        {/* Hostname */}
-        <text x="88" y="64" fill="#f0ede4" fontSize="10" fontFamily="system-ui" opacity="0.45">{hostname.slice(0, 24)}</text>
-        {/* VitrinAI watermark */}
-        <text x="222" y="74" textAnchor="end" fill="#f0ede4" fontSize="8" fontFamily="system-ui" opacity="0.3">VitrinAI</text>
+    <div style={{ display: "inline-block" }} className="select-none">
+      <svg width="240" height="60" viewBox="0 0 240 60" xmlns="http://www.w3.org/2000/svg">
+        {/* Card */}
+        <rect width="240" height="60" rx="10" fill="#ffffff" />
+        <rect x="0.5" y="0.5" width="239" height="59" rx="9.5" fill="none" stroke="#e5e0d5" strokeWidth="1" />
+
+        {/* Grade pill */}
+        <rect x="14" y="13" width="34" height="34" rx="8" fill={color} />
+        <text x="31" y="36" textAnchor="middle" fill="#ffffff" fontSize="18" fontWeight="700" fontFamily="system-ui, sans-serif">{grade}</text>
+
+        {/* Domain */}
+        <text x="60" y="26" fill="#1c1c1b" fontSize="12" fontWeight="600" fontFamily="system-ui, sans-serif">{label}</text>
+
+        {/* Score + branding */}
+        <text x="60" y="42" fill="#888" fontSize="10" fontFamily="system-ui, sans-serif">
+          {score}<tspan fill="#bbb">/100</tspan>
+          <tspan dx="6" fill="#c5bfb4">·</tspan>
+          <tspan dx="6" fill="#b0a898">VitrinAI</tspan>
+        </text>
       </svg>
     </div>
   );
@@ -90,7 +92,7 @@ export function BadgeSection({ auditId, hostname, score, grade, isOwner, initial
   }
 
   function copyEmbed() {
-    const code = `<a href="${reportUrl}" target="_blank" rel="noopener"><img src="${reportUrl}/badge.svg" alt="Score VitrinAI ${score}/100" width="240" height="80" /></a>`;
+    const code = `<a href="${reportUrl}" target="_blank" rel="noopener"><img src="${reportUrl}/badge.svg" alt="Score VitrinAI ${score}/100" width="240" height="60" /></a>`;
     navigator.clipboard.writeText(code).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
@@ -192,7 +194,7 @@ export function BadgeSection({ auditId, hostname, score, grade, isOwner, initial
           <div>
             <p className="text-[11px] text-pierre mb-1.5">Code à intégrer sur votre site :</p>
             <code className="block bg-sable text-[10px] text-charbon px-4 py-3 rounded-xl break-all leading-relaxed">
-              {`<a href="${reportUrl}"><img src="${reportUrl}/badge.svg" alt="Score VitrinAI ${score}/100" width="240" height="80"/></a>`}
+              {`<a href="${reportUrl}"><img src="${reportUrl}/badge.svg" alt="Score VitrinAI ${score}/100" width="240" height="60"/></a>`}
             </code>
           </div>
         </motion.div>
