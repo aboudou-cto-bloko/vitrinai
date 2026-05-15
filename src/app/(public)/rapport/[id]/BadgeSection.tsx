@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { motion } from "motion/react";
 import { useAction, useQuery } from "convex/react";
 import { api } from "@/../convex/_generated/api";
@@ -50,7 +50,6 @@ function ScoreBadge({ hostname, score, grade }: { hostname: string; score: numbe
 export function BadgeSection({ auditId, hostname, score, grade, isOwner, initialUnlocked }: Props) {
   const [unlocked, setUnlocked] = useState(initialUnlocked ?? false);
   const [loading, setLoading] = useState(false);
-  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const badgeRef = useRef<HTMLDivElement>(null);
@@ -62,14 +61,9 @@ export function BadgeSection({ auditId, hostname, score, grade, isOwner, initial
     ? `${window.location.origin}/rapport/${auditId}`
     : `/rapport/${auditId}`;
 
-  useEffect(() => {
-    if (!unlocked) return;
-    import("qrcode").then((QRCode) => {
-      QRCode.toDataURL(reportUrl, { width: 160, margin: 1, color: { dark: "#1c1c1b", light: "#ffffff" } })
-        .then(setQrDataUrl)
-        .catch(console.error);
-    });
-  }, [unlocked, reportUrl]);
+  const qrUrl = unlocked
+    ? `https://api.qrserver.com/v1/create-qr-code/?size=160x160&margin=1&data=${encodeURIComponent(reportUrl)}`
+    : null;
 
   async function handleUnlock() {
     setLoading(true);
@@ -165,13 +159,12 @@ export function BadgeSection({ auditId, hostname, score, grade, isOwner, initial
             </div>
 
             {/* QR code */}
-            {qrDataUrl && (
+            {qrUrl ? (
               <div className="flex flex-col items-center gap-2">
-                <img src={qrDataUrl} alt="QR code rapport" width={80} height={80} className="rounded-lg border border-bordure" />
+                <img src={qrUrl} alt="QR code rapport" width={80} height={80} className="rounded-lg border border-bordure" />
                 <span className="text-[10px] text-pierre text-center">QR → Rapport</span>
               </div>
-            )}
-            {!qrDataUrl && (
+            ) : (
               <div className="w-[80px] h-[80px] bg-sable rounded-lg flex items-center justify-center">
                 <QrCode size={32} className="text-pierre/40" />
               </div>
