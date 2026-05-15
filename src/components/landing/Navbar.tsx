@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useSession } from "@/lib/auth-client";
 import { useQuery } from "convex/react";
 import { api } from "@/../convex/_generated/api";
+import { NotificationBell } from "@/components/NotificationBell";
 
 export function Navbar() {
   const { data: session } = useSession();
@@ -82,6 +83,7 @@ export function Navbar() {
                 )}
                 Crédits
               </Link>
+              <NotificationBell />
               <Button size="sm" asChild>
                 <Link href="#analyser">Analyser</Link>
               </Button>

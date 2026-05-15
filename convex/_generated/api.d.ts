@@ -14,11 +14,14 @@ import type * as audits from "../audits.js";
 import type * as auth from "../auth.js";
 import type * as campagnes from "../campagnes.js";
 import type * as credits from "../credits.js";
+import type * as crons from "../crons.js";
 import type * as http from "../http.js";
 import type * as leads from "../leads.js";
 import type * as niches from "../niches.js";
+import type * as notifications from "../notifications.js";
 import type * as payments from "../payments.js";
 import type * as payments_webhooks from "../payments/webhooks.js";
+import type * as suiviAction from "../suiviAction.js";
 
 import type {
   ApiFromModules,
@@ -33,11 +36,14 @@ declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   campagnes: typeof campagnes;
   credits: typeof credits;
+  crons: typeof crons;
   http: typeof http;
   leads: typeof leads;
   niches: typeof niches;
+  notifications: typeof notifications;
   payments: typeof payments;
   "payments/webhooks": typeof payments_webhooks;
+  suiviAction: typeof suiviAction;
 }>;
 
 /**

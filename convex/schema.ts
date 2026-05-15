@@ -119,6 +119,20 @@ export default defineSchema({
     .index("by_url", ["url"])
     .index("by_prochainAudit", ["prochainAudit"]),
 
+  // ── Notifications in-app ─────────────────────────────────────────────────────
+  notifications: defineTable({
+    userId: v.id("users"),
+    type: v.string(), // "suivi_mensuel" | "analyse_prete" | "credits_bas"
+    titre: v.string(),
+    corps: v.string(),
+    lu: v.boolean(),
+    lien: v.optional(v.string()), // ex: /rapport/[id]
+    auditId: v.optional(v.id("audits")),
+    createdAt: v.number(),
+  })
+    .index("by_userId", ["userId"])
+    .index("by_userId_lu", ["userId", "lu"]),
+
   // ── Suivi des audits anonymes (1 gratuit par IP) ────────────────────────────
   anonymousAudits: defineTable({
     ip: v.string(),
