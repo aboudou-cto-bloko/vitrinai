@@ -9,12 +9,14 @@ import {
   Gear,
   MapTrifold,
   Coins,
+  MagnifyingGlassPlus,
 } from "@phosphor-icons/react/dist/ssr";
 import { fetchAuthQuery } from "@/lib/auth-server";
 import { api } from "@/../convex/_generated/api";
 
 const NAV = [
   { href: "/admin", label: "Vue d'ensemble", Icon: ChartBar },
+  { href: "/admin/analyses", label: "Analyses", Icon: MagnifyingGlassPlus },
   { href: "/admin/utilisateurs", label: "Utilisateurs", Icon: Users },
   { href: "/admin/crm/niches", label: "Niches", Icon: MapTrifold },
   { href: "/admin/crm/leads", label: "Leads", Icon: Users },
