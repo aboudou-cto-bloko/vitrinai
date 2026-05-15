@@ -23,6 +23,7 @@ import { ActionPlanSection } from "./ActionPlanSection";
 import { BadgeSection } from "./BadgeSection";
 import { SuiviSection } from "./SuiviSection";
 import { ConcurrentSection } from "./ConcurrentSection";
+import { FeatureDiscoveryStrip } from "./FeatureDiscoveryStrip";
 import { WebVitalsSection } from "@/components/rapport/WebVitalsSection";
 import { AofSection } from "@/components/rapport/AofSection";
 import { useSession } from "@/lib/auth-client";
@@ -563,28 +564,37 @@ export function RapportContent({
 
             {/* Features premium */}
             {!isGated && (
-              <section className="space-y-2">
-                <SuiviSection auditId={auditId} isOwner={isOwner} />
-                <ActionPlanSection
-                  auditId={auditId}
-                  initialPlan={initialActionPlan}
-                  isOwner={isOwner}
-                />
-                <BadgeSection
-                  auditId={auditId}
-                  hostname={hostname}
-                  score={scores.global}
-                  grade={scores.grade}
-                  isOwner={isOwner}
-                  initialUnlocked={initialBadgeUnlocked}
-                />
-                <ConcurrentSection
-                  auditId={auditId}
-                  hostname={hostname}
-                  ownScores={scores}
-                  isOwner={isOwner}
-                  initialAnalysis={initialConcurrentAnalysis}
-                />
+              <section className="space-y-6">
+                <FeatureDiscoveryStrip />
+                <div id="suivi">
+                  <SuiviSection auditId={auditId} isOwner={isOwner} />
+                </div>
+                <div id="action-plan">
+                  <ActionPlanSection
+                    auditId={auditId}
+                    initialPlan={initialActionPlan}
+                    isOwner={isOwner}
+                  />
+                </div>
+                <div id="badge">
+                  <BadgeSection
+                    auditId={auditId}
+                    hostname={hostname}
+                    score={scores.global}
+                    grade={scores.grade}
+                    isOwner={isOwner}
+                    initialUnlocked={initialBadgeUnlocked}
+                  />
+                </div>
+                <div id="concurrent">
+                  <ConcurrentSection
+                    auditId={auditId}
+                    hostname={hostname}
+                    ownScores={scores}
+                    isOwner={isOwner}
+                    initialAnalysis={initialConcurrentAnalysis}
+                  />
+                </div>
               </section>
             )}
 

@@ -54,6 +54,8 @@ const included = [
   "Export PDF du rapport",
   "Rapport partageable par lien",
   "Historique de toutes vos analyses",
+  "Plan d'action IA disponible (5 cr)",
+  "Badge & QR code disponibles (2 cr)",
 ];
 
 export function PricingSection() {

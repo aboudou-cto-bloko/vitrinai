@@ -4,6 +4,7 @@ import { HeroSection } from "@/components/landing/HeroSection";
 import { FeaturesSection } from "@/components/landing/FeaturesSection";
 import { HowItWorksSection } from "@/components/landing/HowItWorksSection";
 import { SectorsSection } from "@/components/landing/SectorsSection";
+import { PremiumFeaturesSection } from "@/components/landing/PremiumFeaturesSection";
 import { PricingSection } from "@/components/landing/PricingSection";
 import { FooterSection } from "@/components/landing/FooterSection";
 
@@ -72,6 +73,7 @@ export default function HomePage() {
           <FeaturesSection />
           <HowItWorksSection />
           <SectorsSection />
+          <PremiumFeaturesSection />
           <PricingSection />
         </main>
         <FooterSection />
