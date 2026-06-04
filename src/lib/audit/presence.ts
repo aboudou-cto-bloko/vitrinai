@@ -13,8 +13,9 @@ export interface PresenceResult {
   telegramUrl: string | null;
   hasWhatsApp: boolean;
   whatsAppNumber: string | null;
-  hasGoogleMapsEmbed: boolean;
-  hasGoogleMapsLink: boolean;
+  hasGmbConfirmed: boolean;    // lien CID / g.page / maps.app.goo.gl = fiche GMB identifiée
+  hasGoogleMapsEmbed: boolean; // iframe Maps générique
+  hasGoogleMapsLink: boolean;  // lien Maps générique
   hasPhoneNumber: boolean;
   phoneNumber: string | null;
   hasEmailAddress: boolean;
@@ -228,7 +229,15 @@ export async function analyzePresence(url: string): Promise<PresenceResult> {
     const hasWhatsApp = !!waUrl || fullHtml.includes("whatsapp");
     const whatsAppNumber = waUrl ? extractWhatsAppNumber(waUrl) : null;
 
-    // ── Google Maps ────────────────────────────────────────────────────────────
+    // ── Google Maps & GMB ──────────────────────────────────────────────────────
+    // GMB confirmé : URL contenant un CID, un shortlink g.page, ou maps.app.goo.gl
+    // (ces patterns ne sont générés que depuis une fiche Google My Business)
+    const hasGmbConfirmed = allUrls.some((u) =>
+      /[?&]cid=\d+/i.test(u) ||
+      /(?:https?:\/\/)?g\.page\//i.test(u) ||
+      /(?:https?:\/\/)?maps\.app\.goo\.gl\//i.test(u)
+    ) || fullHtml.includes("g.page/") || /[?&]cid=\d+/i.test(fullHtml);
+
     const hasGoogleMapsEmbed =
       fullHtml.includes("maps.googleapis.com") ||
       fullHtml.includes("maps/embed") ||
@@ -265,6 +274,7 @@ export async function analyzePresence(url: string): Promise<PresenceResult> {
       telegramUrl,
       hasWhatsApp,
       whatsAppNumber,
+      hasGmbConfirmed,
       hasGoogleMapsEmbed,
       hasGoogleMapsLink,
       hasPhoneNumber: phone.has,
@@ -284,7 +294,7 @@ export async function analyzePresence(url: string): Promise<PresenceResult> {
       hasTwitterLink: false, twitterUrl: null,
       hasTelegramLink: false, telegramUrl: null,
       hasWhatsApp: false, whatsAppNumber: null,
-      hasGoogleMapsEmbed: false, hasGoogleMapsLink: false,
+      hasGmbConfirmed: false, hasGoogleMapsEmbed: false, hasGoogleMapsLink: false,
       hasPhoneNumber: false, phoneNumber: null,
       hasEmailAddress: false, emailAddress: null,
       hasAddress: false, hasContactForm: false,

@@ -243,10 +243,14 @@ export function computeScores(
     presChecks.push(warn("ig", "Pas de lien Instagram", "Absent", "Idéal pour les restaurants, salons, hôtels.", "medium"));
   }
 
-  if (presence.hasGoogleMapsEmbed || presence.hasGoogleMapsLink) {
-    pres += 8; presChecks.push(pass("gmaps", "Présence Google Maps", "Détectée", "high"));
+  if (presence.hasGmbConfirmed) {
+    pres += 8;
+    presChecks.push(pass("gmb", "Fiche Google My Business", "Lien GMB détecté", "high"));
+  } else if (presence.hasGoogleMapsEmbed || presence.hasGoogleMapsLink) {
+    pres += 5;
+    presChecks.push(warn("gmb", "Google Maps présent, fiche GMB non confirmée", "Partiel", "Ajoutez le lien direct vers votre fiche Google Business (g.page/…) pour confirmer votre présence.", "high"));
   } else {
-    presChecks.push(fail("gmaps", "Google Maps non intégré", "Absent", "Votre adresse est introuvable sur Google Maps.", "high"));
+    presChecks.push(fail("gmb", "Absent de Google Maps", "Aucune présence", "Créez une fiche Google My Business gratuite et ajoutez le lien sur votre site.", "high"));
   }
 
   if (presence.hasWhatsApp) {
